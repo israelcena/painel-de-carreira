@@ -13,11 +13,11 @@ export default function LoginPage() {
             <BriefcaseBusiness size={26} strokeWidth={2.2} />
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-ink">
-              Painel de Carreira
+            <h1 className="text-3xl font-extrabold tracking-tight text-ink">
+              ProMove
             </h1>
             <p className="text-sm font-semibold text-ink-soft">
-              Suas candidaturas, organizadas.
+              movimento profissional
             </p>
           </div>
         </div>

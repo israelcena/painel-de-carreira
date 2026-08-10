@@ -13,7 +13,7 @@ export function Topbar({ user }: { user: string }) {
       >
         <BriefcaseBusiness size={18} strokeWidth={2.4} />
         <span className="hidden text-sm font-extrabold tracking-tight sm:block">
-          Painel de Carreira
+          ProMove
         </span>
       </Link>
 

@@ -9,11 +9,11 @@ const nunito = Nunito_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: "Painel de Carreira",
-    template: "%s · Painel de Carreira",
+    default: "ProMove — movimento profissional",
+    template: "%s · ProMove",
   },
   description:
-    "Gerenciador de candidaturas a vagas de emprego com kanban, histórico e métricas.",
+    "Gerenciador de candidaturas a vagas de emprego com kanban, análise SWOT, histórico e métricas.",
 };
 
 export const viewport: Viewport = {
