@@ -25,10 +25,6 @@ export default function LoginPage() {
         <div className="rounded-2xl bg-white p-6 shadow-card">
           <LoginForm />
         </div>
-
-        <p className="mt-4 text-center text-xs font-semibold text-ink-soft">
-          Credenciais definidas em APP_USER e APP_PASSWORD no arquivo .env
-        </p>
       </div>
     </main>
   );
