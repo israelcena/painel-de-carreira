@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Section {
+  NACIONAL
+  INTERNACIONAL
+}
+
+enum Priority {
+  BAIXA
+  MEDIA
+  ALTA
+}
+
+enum WorkModel {
+  REMOTO
+  HIBRIDO
+  PRESENCIAL
+}
+
+enum RejectionReason {
+  SEM_RETORNO
+  PERFIL_NAO_ADERENTE
+  EXPERIENCIA
+  PRETENSAO_SALARIAL
+  IDIOMA
+  TESTE_TECNICO
+  ENTREVISTA
+  VAGA_ENCERRADA
+  VISTO_LOCALIZACAO
+  OUTRO
+}
+
+enum EventType {
+  CREATED
+  STAGE_CHANGED
+  REJECTED
+  RESTORED
+  NOTE
+  EDITED
+  ARCHIVED
+  UNARCHIVED
+}
+
+model Stage {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  name        String
+  order       Int
+  color       String
+  isRejection Boolean @default(false)
+
+  applications Application[]
+  rejectedFrom Application[] @relation("RejectedFromStage")
+
+  @@map("stages")
+}
+
+model Application {
+  id       String  @id @default(cuid())
+  section  Section
+  stage    Stage   @relation(fields: [stageId], references: [id])
+  stageId  String
+  position Float   @default(0)
+
+  company      String
+  roleTitle    String
+  jobUrl       String?
+  platform     String?
+  locationCity String?
+  workModel    WorkModel?
+  countryCode  String?
+  salary       String?
+  priority     Priority   @default(MEDIA)
+  appliedAt    DateTime?
+  notes        String?
+
+  rejectionReason     RejectionReason?
+  rejectionNote       String?
+  rejectedAt          DateTime?
+  rejectedFromStage   Stage?           @relation("RejectedFromStage", fields: [rejectedFromStageId], references: [id])
+  rejectedFromStageId String?
+
+  archivedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  events ApplicationEvent[]
+
+  @@index([section, stageId])
+  @@map("applications")
+}
+
+model ApplicationEvent {
+  id            String      @id @default(cuid())
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId String
+  type          EventType
+  fromStageId   String?
+  toStageId     String?
+  data          Json?
+  createdAt     DateTime    @default(now())
+
+  @@index([applicationId, createdAt])
+  @@index([createdAt])
+  @@map("application_events")
+}

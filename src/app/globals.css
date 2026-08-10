@@ -1,26 +1,59 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+
+  /* Paleta baseada na referência visual (hussle) */
+  --color-page: #c9d4f2;
+  --color-panel: #eef1fb;
+  --color-panel-strong: #e3e9f9;
+  --color-ink: #3d4468;
+  --color-ink-soft: #5a6284;
+  --color-muted: #8a92b2;
+  --color-line: #dde3f5;
+
+  --color-brand: #6f7bf0;
+  --color-brand-deep: #6a5cd8;
+  --color-brand-violet: #7b6ce4;
+  --color-brand-blue: #57a5f5;
+
+  --shadow-card:
+    0 1px 3px rgba(80, 95, 160, 0.14), 0 6px 18px rgba(80, 95, 160, 0.1);
+  --shadow-float: 0 10px 30px rgba(60, 75, 140, 0.3);
+  --shadow-top: 0 -4px 16px rgba(60, 75, 140, 0.12);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+/* Barra de rolagem discreta para as áreas do board */
+.nice-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(110, 125, 190, 0.4) transparent;
+}
+.nice-scroll::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+.nice-scroll::-webkit-scrollbar-thumb {
+  background: rgba(110, 125, 190, 0.4);
+  border-radius: 8px;
+}
+.nice-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Evita seleção de texto ao arrastar cards */
+.dragging-active,
+.dragging-active * {
+  cursor: grabbing !important;
+  user-select: none;
 }

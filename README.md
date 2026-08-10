@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Painel de Carreira
 
-## Getting Started
+Gerenciador pessoal de candidaturas a vagas de emprego, em estilo kanban (como o Trello), com duas seções — **Nacional** e **Internacional** (com bandeira do país em cada vaga) — registro de datas e motivos de rejeição, histórico detalhado de cada movimentação e um dashboard de métricas.
 
-First, run the development server:
+## Como rodar (Docker)
+
+Pré-requisito: Docker Desktop (ou engine + compose).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# 1. (opcional) copie e ajuste as variáveis de ambiente
+cp .env.example .env
+
+# 2. suba tudo (Postgres + aplicação)
+docker compose up --build -d
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abra **http://localhost:3000** e entre com as credenciais do `.env` (padrão: `admin` / `admin123`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+As migrations e o seed das etapas rodam automaticamente na inicialização do container. Os dados ficam no volume `pgdata` e sobrevivem a restarts (`docker compose down` preserva; `docker compose down -v` apaga tudo).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Variáveis de ambiente (`.env`)
 
-## Learn More
+| Variável | Padrão | Descrição |
+|---|---|---|
+| `APP_USER` / `APP_PASSWORD` | `admin` / `admin123` | Credenciais de login da aplicação |
+| `SESSION_SECRET` | — | Segredo da sessão (mínimo 32 caracteres — troque!) |
+| `APP_PORT` | `3000` | Porta da aplicação no host |
+| `POSTGRES_USER/PASSWORD/DB` | `painel` | Credenciais do banco |
+| `POSTGRES_PORT` | `5432` | Porta do Postgres exposta no host |
+| `DATABASE_URL` | localhost | Usada apenas para desenvolvimento local |
 
-To learn more about Next.js, take a look at the following resources:
+## Funcionalidades
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Kanban** com 7 etapas: Interesse → Aplicado → Contato/Screening → Entrevista → Teste Técnico → Oferta → Rejeitado
+- **Arrastar e soltar** entre colunas (mouse e touch — segure ~0,2s no celular)
+- Ao soltar uma vaga em **Rejeitado**, um modal pede o **motivo** (categorias + detalhes) e a **data**
+- **Duas seções**: Nacional e Internacional — vagas internacionais têm **bandeira do país**
+- **Modal de detalhes** com todos os campos (plataforma, salário, modelo de trabalho, link, notas...) e **timeline** completa da vaga
+- **Histórico detalhado**: toda criação, movimentação, rejeição, edição e nota vira um evento
+- **Dashboard**: KPIs (aplicações, ativas, entrevistas, ofertas, rejeições, taxa de resposta), aplicações por mês, funil de conversão, motivos de rejeição, tempo médio por etapa, comparativo Nacional × Internacional e tabela por país
+- **Busca** por empresa/cargo na barra superior
+- **Arquivar** vagas (saem do quadro, continuam nas métricas) e desarquivar pelo Histórico
+- **Responsivo**: do celular (navegação inferior, uma coluna por vez com swipe) a telas ultrawide (todas as colunas visíveis)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Desenvolvimento local (sem Docker para o app)
 
-## Deploy on Vercel
+```bash
+# sobe apenas o banco
+docker compose up -d db
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+npm install
+npx prisma migrate dev   # aplica migrations + seed
+npm run dev              # http://localhost:3000
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Stack
+
+Next.js 16 (App Router, Server Actions) · React 19 · TypeScript · Tailwind CSS v4 · Prisma 6 + PostgreSQL 17 · dnd-kit · Recharts · iron-session · Docker Compose
+
+## Estrutura
+
+```
+src/
+  app/(app)/board/[section]  → kanban (nacional | internacional)
+  app/(app)/dashboard        → métricas
+  app/(app)/historico        → log de eventos com filtros
+  app/login                  → autenticação
+  app/actions/               → server actions (vagas + auth)
+  components/                → board, modais, dashboard, layout, ui
+  lib/                       → prisma, sessão, métricas, domínio, países
+prisma/                      → schema, migrations, seed das etapas
+compose.yml · Dockerfile     → orquestração (db + web)
+```

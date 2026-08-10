@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.claude
+.env
+.env.*
+!.env.example
+Dockerfile
+compose.yml
+README.md
+AGENTS.md
+CLAUDE.md
+npm-debug.log*
+*.tsbuildinfo
