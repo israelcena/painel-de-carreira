@@ -25,7 +25,22 @@ try {
       create: stage,
     });
   }
-  console.log(`Seed ok: ${STAGES.length} etapas garantidas.`);
+
+  // Rascunho inicial de pitch (só se ainda não existir nenhum texto)
+  const textCount = await prisma.textDoc.count();
+  if (textCount === 0) {
+    await prisma.textDoc.create({
+      data: {
+        title: "Meu Pitch",
+        content:
+          "Quem sou eu:\n\nO que eu faço de melhor:\n\nO que estou buscando:\n\nPor que me contratar:\n",
+      },
+    });
+  }
+
+  console.log(
+    `Seed ok: ${STAGES.length} etapas garantidas${textCount === 0 ? " + pitch inicial criado" : ""}.`
+  );
 } finally {
   await prisma.$disconnect();
 }

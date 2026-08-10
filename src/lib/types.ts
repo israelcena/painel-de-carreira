@@ -53,6 +53,10 @@ export interface AppCard {
   priority: Priority;
   appliedAt: Date | null;
   notes: string | null;
+  jobDescription: string | null;
+  applicationUrl: string | null;
+  nextActionNote: string | null;
+  nextActionAt: Date | null;
   rejectionReason: RejectionReason | null;
   rejectionNote: string | null;
   rejectedAt: Date | null;
@@ -60,6 +64,32 @@ export interface AppCard {
   createdAt: Date;
   noteCount: number;
   stageEnteredAt: Date;
+}
+
+export type SwotQuadrant = "FORCA" | "FRAQUEZA" | "OPORTUNIDADE" | "AMEACA";
+
+export interface SwotItemDTO {
+  id: string;
+  applicationId: string | null;
+  quadrant: SwotQuadrant;
+  text: string;
+  createdAt: Date;
+}
+
+export interface DocumentDTO {
+  id: string;
+  name: string;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  createdAt: Date;
+}
+
+export interface TextDocDTO {
+  id: string;
+  title: string;
+  content: string;
+  updatedAt: Date;
 }
 
 export interface EventDTO {

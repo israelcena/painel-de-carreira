@@ -60,6 +60,22 @@ export interface SectionSummary {
   rejeitadas: number;
 }
 
+export interface WeeklyGoalData {
+  goal: number;
+  count: number;
+}
+
+export interface NextActionItem {
+  id: string;
+  company: string;
+  roleTitle: string;
+  section: Section;
+  countryCode: string | null;
+  note: string | null;
+  date: Date;
+  overdue: boolean;
+}
+
 export interface DashboardData {
   stages: StageDTO[];
   kpis: KpiData;
@@ -70,6 +86,8 @@ export interface DashboardData {
   porPais: CountryPoint[];
   porSecao: SectionSummary[];
   atividadeRecente: EventWithApp[];
+  metaSemana: WeeklyGoalData;
+  proximasAcoes: NextActionItem[];
 }
 
 const ENTER_STAGE_EVENTS = new Set([
@@ -84,7 +102,7 @@ export async function getDashboardData(
 ): Promise<DashboardData> {
   const appWhere = filter ? { section: filter } : {};
 
-  const [stagesRaw, apps, events] = await Promise.all([
+  const [stagesRaw, apps, events, goalSetting] = await Promise.all([
     prisma.stage.findMany({ orderBy: { order: "asc" } }),
     prisma.application.findMany({ where: appWhere }),
     prisma.applicationEvent.findMany({
@@ -102,6 +120,7 @@ export async function getDashboardData(
         },
       },
     }),
+    prisma.setting.findUnique({ where: { key: "weeklyGoal" } }),
   ]);
 
   const stages = stagesRaw as StageDTO[];
@@ -295,6 +314,48 @@ export async function getDashboardData(
     };
   });
 
+  // ── Meta semanal (segunda a domingo) ────────────────────────────────
+  const goal = Math.max(1, parseInt(goalSetting?.value ?? "10", 10) || 10);
+  const today = new Date();
+  const weekday = (today.getDay() + 6) % 7; // 0 = segunda
+  const weekStart = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate() - weekday
+  );
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 7);
+  const weekCount = apps.filter((app) => {
+    const date = app.appliedAt ?? app.createdAt;
+    return date >= weekStart && date < weekEnd;
+  }).length;
+
+  // ── Próximas ações (vagas ativas com data marcada) ─────────────────
+  const todayStart = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
+  const proximasAcoes: NextActionItem[] = apps
+    .filter(
+      (app) =>
+        app.nextActionAt &&
+        !app.archivedAt &&
+        app.stageId !== rejectionStage?.id
+    )
+    .map((app) => ({
+      id: app.id,
+      company: app.company,
+      roleTitle: app.roleTitle,
+      section: app.section as Section,
+      countryCode: app.countryCode,
+      note: app.nextActionNote,
+      date: app.nextActionAt as Date,
+      overdue: (app.nextActionAt as Date) < todayStart,
+    }))
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
+    .slice(0, 10);
+
   // ── Atividade recente ───────────────────────────────────────────────
   const atividadeRecente: EventWithApp[] = events
     .slice(-12)
@@ -325,5 +386,7 @@ export async function getDashboardData(
     porPais,
     porSecao,
     atividadeRecente,
+    metaSemana: { goal, count: weekCount },
+    proximasAcoes,
   };
 }

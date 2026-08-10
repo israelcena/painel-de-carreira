@@ -2,6 +2,7 @@ import {
   Activity,
   Award,
   BriefcaseBusiness,
+  CalendarClock,
   ThumbsDown,
   TrendingUp,
   Users,
@@ -10,11 +11,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BarList } from "@/components/dashboard/BarList";
 import { MonthlyChart } from "@/components/dashboard/MonthlyChart";
+import { WeeklyGoalCard } from "@/components/dashboard/WeeklyGoalCard";
 import { Flag } from "@/components/ui/Flag";
 import { countryName } from "@/lib/countries";
 import { SECTION_COLORS, SECTION_LABELS } from "@/lib/domain";
 import { describeEvent, EVENT_COLORS } from "@/lib/events";
-import { formatDateTime, relativeTime } from "@/lib/format";
+import { formatDate, formatDateTime, relativeTime } from "@/lib/format";
 import { getDashboardData } from "@/lib/metrics";
 import type { Section } from "@/lib/types";
 
@@ -140,6 +142,64 @@ export default async function DashboardPage({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+        <WeeklyGoalCard
+          goal={data.metaSemana.goal}
+          count={data.metaSemana.count}
+        />
+
+        <Card title="Próximas ações">
+          {data.proximasAcoes.length === 0 ? (
+            <p className="py-6 text-center text-sm font-semibold text-muted">
+              Nenhuma ação agendada. Defina a próxima ação de uma vaga no
+              modal de detalhes.
+            </p>
+          ) : (
+            <ul className="divide-y divide-line">
+              {data.proximasAcoes.map((item) => (
+                <li key={item.id} className="flex items-start gap-2.5 py-2">
+                  <CalendarClock
+                    size={15}
+                    strokeWidth={2.4}
+                    className={`mt-0.5 shrink-0 ${
+                      item.overdue ? "text-red-500" : "text-muted"
+                    }`}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-extrabold text-ink">
+                      {item.company}
+                      <span className="font-semibold text-ink-soft">
+                        {" "}
+                        — {item.roleTitle}
+                      </span>
+                      {item.countryCode && (
+                        <Flag
+                          code={item.countryCode}
+                          className="ml-1.5 inline h-3 w-[1.125rem] rounded-[2px] align-baseline"
+                        />
+                      )}
+                    </p>
+                    {item.note && (
+                      <p className="truncate text-xs font-semibold text-ink-soft">
+                        {item.note}
+                      </p>
+                    )}
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-extrabold ${
+                      item.overdue
+                        ? "bg-red-50 text-red-500"
+                        : "bg-panel text-ink-soft"
+                    }`}
+                  >
+                    {item.overdue ? "Venceu · " : ""}
+                    {formatDate(item.date)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
         <Card title="Aplicações por mês">
           <MonthlyChart data={data.porMes} />
         </Card>

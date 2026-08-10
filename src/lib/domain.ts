@@ -3,6 +3,7 @@ import type {
   RejectionReason,
   Section,
   SectionSlug,
+  SwotQuadrant,
   WorkModel,
 } from "./types";
 
@@ -74,6 +75,40 @@ export const REJECTION_REASON_ORDER: RejectionReason[] = [
   "VISTO_LOCALIZACAO",
   "OUTRO",
 ];
+
+export const SWOT_ORDER: SwotQuadrant[] = [
+  "FORCA",
+  "FRAQUEZA",
+  "OPORTUNIDADE",
+  "AMEACA",
+];
+
+// Cores semânticas dos quadrantes (identidade sempre pelo título; cor é reforço)
+export const SWOT_CONFIG: Record<
+  SwotQuadrant,
+  { label: string; color: string; hint: string }
+> = {
+  FORCA: {
+    label: "Forças",
+    color: "#10b981",
+    hint: "Interno · o que joga a seu favor",
+  },
+  FRAQUEZA: {
+    label: "Fraquezas",
+    color: "#ef4444",
+    hint: "Interno · gaps e pontos a desenvolver",
+  },
+  OPORTUNIDADE: {
+    label: "Oportunidades",
+    color: "#3b82f6",
+    hint: "Externo · fatores do mercado a favor",
+  },
+  AMEACA: {
+    label: "Ameaças",
+    color: "#f59e0b",
+    hint: "Externo · riscos e concorrência",
+  },
+};
 
 export const PLATFORM_SUGGESTIONS = [
   "LinkedIn",

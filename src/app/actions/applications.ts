@@ -46,6 +46,10 @@ const FIELD_LABELS: Record<string, string> = {
   appliedAt: "data de aplicação",
   notes: "observações",
   section: "seção",
+  jobDescription: "descrição da vaga",
+  applicationUrl: "link da candidatura",
+  nextActionNote: "próxima ação",
+  nextActionAt: "data da próxima ação",
 };
 
 export interface ApplicationInput {
@@ -62,6 +66,10 @@ export interface ApplicationInput {
   priority?: Priority;
   appliedAt?: string | null; // "YYYY-MM-DD"
   notes?: string | null;
+  jobDescription?: string | null;
+  applicationUrl?: string | null;
+  nextActionNote?: string | null;
+  nextActionAt?: string | null; // "YYYY-MM-DD"
 }
 
 function clean(value: string | null | undefined): string | null {
@@ -144,6 +152,12 @@ export async function createApplication(
             : "MEDIA",
         appliedAt: input.appliedAt ? dateFromInput(input.appliedAt) : null,
         notes: clean(input.notes),
+        jobDescription: clean(input.jobDescription),
+        applicationUrl: clean(input.applicationUrl),
+        nextActionNote: clean(input.nextActionNote),
+        nextActionAt: input.nextActionAt
+          ? dateFromInput(input.nextActionAt)
+          : null,
         events: {
           create: {
             type: "CREATED",
@@ -361,6 +375,18 @@ export async function updateApplication(
     if (input.appliedAt !== undefined) {
       const appliedAt = input.appliedAt ? dateFromInput(input.appliedAt) : null;
       setField("appliedAt", appliedAt, app.appliedAt);
+    }
+    if (input.jobDescription !== undefined)
+      setField("jobDescription", clean(input.jobDescription), app.jobDescription);
+    if (input.applicationUrl !== undefined)
+      setField("applicationUrl", clean(input.applicationUrl), app.applicationUrl);
+    if (input.nextActionNote !== undefined)
+      setField("nextActionNote", clean(input.nextActionNote), app.nextActionNote);
+    if (input.nextActionAt !== undefined) {
+      const nextActionAt = input.nextActionAt
+        ? dateFromInput(input.nextActionAt)
+        : null;
+      setField("nextActionAt", nextActionAt, app.nextActionAt);
     }
 
     // Seção e país (mudar seção reposiciona no fim da coluna equivalente)

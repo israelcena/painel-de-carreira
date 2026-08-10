@@ -15,6 +15,8 @@ import {
   getApplicationEvents,
   updateApplication,
 } from "@/app/actions/applications";
+import { getSwotItems } from "@/app/actions/swot";
+import { SwotGrid } from "@/components/swot/SwotGrid";
 import {
   PLATFORM_SUGGESTIONS,
   PRIORITY_LABELS,
@@ -36,6 +38,7 @@ import type {
   Priority,
   Section,
   StageDTO,
+  SwotItemDTO,
   WorkModel,
 } from "@/lib/types";
 import { CountrySelect } from "@/components/ui/CountrySelect";
@@ -68,6 +71,15 @@ function DetailsTab({
   const [locationCity, setLocationCity] = useState(app.locationCity ?? "");
   const [salary, setSalary] = useState(app.salary ?? "");
   const [jobUrl, setJobUrl] = useState(app.jobUrl ?? "");
+  const [applicationUrl, setApplicationUrl] = useState(
+    app.applicationUrl ?? ""
+  );
+  const [nextActionNote, setNextActionNote] = useState(
+    app.nextActionNote ?? ""
+  );
+  const [nextActionAt, setNextActionAt] = useState(
+    dateToInput(app.nextActionAt)
+  );
   const [notes, setNotes] = useState(app.notes ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -90,6 +102,9 @@ function DetailsTab({
         locationCity: locationCity || null,
         salary: salary || null,
         jobUrl: jobUrl || null,
+        applicationUrl: applicationUrl || null,
+        nextActionNote: nextActionNote || null,
+        nextActionAt: nextActionAt || null,
         notes: notes || null,
       });
       if (result.ok) onClose();
@@ -293,16 +308,49 @@ function DetailsTab({
         </Field>
       </div>
 
-      <Field label="Link da vaga" htmlFor="ed-url">
-        <input
-          id="ed-url"
-          type="url"
-          value={jobUrl}
-          onChange={(e) => setJobUrl(e.target.value)}
-          placeholder="https://..."
-          className={inputCls}
-        />
-      </Field>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Link da vaga" htmlFor="ed-url">
+          <input
+            id="ed-url"
+            type="url"
+            value={jobUrl}
+            onChange={(e) => setJobUrl(e.target.value)}
+            placeholder="https://... (anúncio)"
+            className={inputCls}
+          />
+        </Field>
+        <Field label="Link da candidatura" htmlFor="ed-app-url">
+          <input
+            id="ed-app-url"
+            type="url"
+            value={applicationUrl}
+            onChange={(e) => setApplicationUrl(e.target.value)}
+            placeholder="https://... (acompanhamento)"
+            className={inputCls}
+          />
+        </Field>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Próxima ação" htmlFor="ed-next-note">
+          <input
+            id="ed-next-note"
+            value={nextActionNote}
+            onChange={(e) => setNextActionNote(e.target.value)}
+            placeholder="Ex.: fazer follow-up com a recrutadora"
+            className={inputCls}
+          />
+        </Field>
+        <Field label="Data da próxima ação" htmlFor="ed-next-date">
+          <input
+            id="ed-next-date"
+            type="date"
+            value={nextActionAt}
+            onChange={(e) => setNextActionAt(e.target.value)}
+            className={inputCls}
+          />
+        </Field>
+      </div>
 
       <Field label="Observações" htmlFor="ed-notes">
         <textarea
@@ -343,6 +391,104 @@ function DetailsTab({
         </button>
       </div>
     </form>
+  );
+}
+
+function DescriptionTab({ app }: { app: AppCard }) {
+  const [value, setValue] = useState(app.jobDescription ?? "");
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [pending, startTransition] = useTransition();
+
+  const save = () => {
+    setError(null);
+    setSaved(false);
+    startTransition(async () => {
+      const result = await updateApplication(app.id, {
+        jobDescription: value || null,
+      });
+      if (result.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2500);
+      } else {
+        setError(result.error);
+      }
+    });
+  };
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        save();
+      }}
+      className="space-y-3"
+    >
+      <Field label="Descrição da vaga" htmlFor="desc-text">
+        <textarea
+          id="desc-text"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          rows={14}
+          placeholder="Cole aqui o texto completo da vaga: requisitos, responsabilidades, benefícios, processo seletivo..."
+          className={`${inputCls} resize-y leading-relaxed`}
+        />
+      </Field>
+
+      <ErrorBox message={error} />
+
+      <div className="flex items-center gap-3">
+        <button
+          type="submit"
+          disabled={pending}
+          className="rounded-xl bg-gradient-to-r from-brand-violet to-brand-blue px-5 py-2.5 text-sm font-extrabold text-white shadow-card transition hover:brightness-105 disabled:opacity-60"
+        >
+          {pending ? "Salvando..." : "Salvar descrição"}
+        </button>
+        {saved && (
+          <span className="text-sm font-extrabold text-emerald-600">
+            Salvo ✓
+          </span>
+        )}
+      </div>
+    </form>
+  );
+}
+
+function SwotTab({ app }: { app: AppCard }) {
+  const [items, setItems] = useState<SwotItemDTO[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getSwotItems(app.id).then((result) => {
+      if (cancelled) return;
+      if (result.ok) setItems(result.data ?? []);
+      else setError(result.error);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [app.id]);
+
+  if (error) return <ErrorBox message={error} />;
+  if (items === null) {
+    return (
+      <p className="py-6 text-center text-sm font-semibold text-muted">
+        Carregando análise SWOT...
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs font-semibold text-ink-soft">
+        Analise o seu fit para <strong>{app.company}</strong>: forças e
+        fraquezas do seu perfil para esta vaga, oportunidades e ameaças do
+        processo.
+      </p>
+      <SwotGrid applicationId={app.id} initialItems={items} compact />
+    </div>
   );
 }
 
@@ -461,7 +607,9 @@ export function ApplicationModal({
   onClose: () => void;
   onMove: (app: AppCard, toStageId: string) => void;
 }) {
-  const [tab, setTab] = useState<"detalhes" | "historico">("detalhes");
+  const [tab, setTab] = useState<
+    "detalhes" | "descricao" | "swot" | "historico"
+  >("detalhes");
   const stageNameById = useMemo(
     () => Object.fromEntries(stages.map((s) => [s.id, s.name])),
     [stages]
@@ -503,6 +651,8 @@ export function ApplicationModal({
         {(
           [
             ["detalhes", "Detalhes"],
+            ["descricao", "Descrição"],
+            ["swot", "SWOT"],
             ["historico", "Histórico"],
           ] as const
         ).map(([key, label]) => (
@@ -510,7 +660,7 @@ export function ApplicationModal({
             key={key}
             type="button"
             onClick={() => setTab(key)}
-            className={`flex-1 rounded-lg py-1.5 text-sm font-extrabold transition ${
+            className={`flex-1 rounded-lg py-1.5 text-xs font-extrabold transition sm:text-sm ${
               tab === key
                 ? "bg-white text-brand shadow-card"
                 : "text-muted hover:text-ink-soft"
@@ -521,7 +671,7 @@ export function ApplicationModal({
         ))}
       </div>
 
-      {tab === "detalhes" ? (
+      {tab === "detalhes" && (
         <DetailsTab
           key={app.id}
           app={app}
@@ -529,7 +679,10 @@ export function ApplicationModal({
           onClose={onClose}
           onMove={onMove}
         />
-      ) : (
+      )}
+      {tab === "descricao" && <DescriptionTab key={app.id} app={app} />}
+      {tab === "swot" && <SwotTab app={app} />}
+      {tab === "historico" && (
         <HistoryTab app={app} stageNameById={stageNameById} />
       )}
     </Modal>

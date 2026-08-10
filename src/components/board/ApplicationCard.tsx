@@ -2,7 +2,14 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Clock, ExternalLink, MessageSquareText, Send } from "lucide-react";
+import {
+  CalendarClock,
+  Clock,
+  ExternalLink,
+  FileText,
+  MessageSquareText,
+  Send,
+} from "lucide-react";
 import { REJECTION_REASON_LABELS } from "@/lib/domain";
 import { daysSince, formatDate } from "@/lib/format";
 import type { AppCard } from "@/lib/types";
@@ -41,6 +48,27 @@ export function CardBody({
         </p>
       )}
 
+      {(app.nextActionNote || app.nextActionAt) && (
+        <p
+          className={`mt-1.5 flex items-center gap-1 truncate text-[11px] font-bold ${
+            app.nextActionAt &&
+            new Date(app.nextActionAt).setHours(0, 0, 0, 0) <
+              new Date().setHours(0, 0, 0, 0)
+              ? "text-red-500"
+              : "text-ink-soft"
+          }`}
+          title="Próxima ação"
+        >
+          <CalendarClock size={11} strokeWidth={2.5} className="shrink-0" />
+          <span className="truncate">
+            {app.nextActionNote ?? "Próxima ação"}
+          </span>
+          {app.nextActionAt && (
+            <span className="shrink-0">· {formatDate(app.nextActionAt)}</span>
+          )}
+        </p>
+      )}
+
       <div className="mt-2.5 flex items-center gap-2.5 text-muted">
         {app.appliedAt && (
           <span
@@ -58,6 +86,11 @@ export function CardBody({
           >
             <MessageSquareText size={11} strokeWidth={2.5} />
             {app.noteCount}
+          </span>
+        )}
+        {app.jobDescription && (
+          <span title="Tem descrição da vaga" className="flex items-center">
+            <FileText size={11} strokeWidth={2.5} />
           </span>
         )}
         <span

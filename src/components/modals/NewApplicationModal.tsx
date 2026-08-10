@@ -40,6 +40,8 @@ function FormBody({
   const [locationCity, setLocationCity] = useState("");
   const [salary, setSalary] = useState("");
   const [jobUrl, setJobUrl] = useState("");
+  const [applicationUrl, setApplicationUrl] = useState("");
+  const [jobDescription, setJobDescription] = useState("");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -60,6 +62,8 @@ function FormBody({
         locationCity: locationCity || null,
         salary: salary || null,
         jobUrl: jobUrl || null,
+        applicationUrl: applicationUrl || null,
+        jobDescription: jobDescription || null,
         notes: notes || null,
       });
       if (result.ok) onClose();
@@ -211,11 +215,33 @@ function FormBody({
             type="url"
             value={jobUrl}
             onChange={(e) => setJobUrl(e.target.value)}
-            placeholder="https://..."
+            placeholder="https://... (anúncio)"
             className={inputCls}
           />
         </Field>
       </div>
+
+      <Field label="Link da candidatura (opcional)" htmlFor="nv-app-url">
+        <input
+          id="nv-app-url"
+          type="url"
+          value={applicationUrl}
+          onChange={(e) => setApplicationUrl(e.target.value)}
+          placeholder="https://... (página de acompanhamento da candidatura)"
+          className={inputCls}
+        />
+      </Field>
+
+      <Field label="Descrição da vaga" htmlFor="nv-description">
+        <textarea
+          id="nv-description"
+          value={jobDescription}
+          onChange={(e) => setJobDescription(e.target.value)}
+          rows={5}
+          placeholder="Cole aqui o texto completo da vaga: requisitos, responsabilidades, benefícios..."
+          className={`${inputCls} resize-y`}
+        />
+      </Field>
 
       <Field label="Observações" htmlFor="nv-notes">
         <textarea

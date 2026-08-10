@@ -48,6 +48,13 @@ enum EventType {
   UNARCHIVED
 }
 
+enum SwotQuadrant {
+  FORCA
+  FRAQUEZA
+  OPORTUNIDADE
+  AMEACA
+}
+
 model Stage {
   id          String  @id @default(cuid())
   key         String  @unique
@@ -87,14 +94,62 @@ model Application {
   rejectedFromStage   Stage?           @relation("RejectedFromStage", fields: [rejectedFromStageId], references: [id])
   rejectedFromStageId String?
 
+  jobDescription String?
+  applicationUrl String?
+  nextActionNote String?
+  nextActionAt   DateTime?
+
   archivedAt DateTime?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  events ApplicationEvent[]
+  events    ApplicationEvent[]
+  swotItems SwotItem[]
 
   @@index([section, stageId])
   @@map("applications")
+}
+
+model SwotItem {
+  id            String       @id @default(cuid())
+  application   Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId String? // null = SWOT geral de carreira
+  quadrant      SwotQuadrant
+  text          String
+  createdAt     DateTime     @default(now())
+
+  @@index([applicationId, quadrant])
+  @@map("swot_items")
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  name      String // rótulo dado pelo usuário ("CV PT", "CV EN"...)
+  fileName  String // nome original do arquivo
+  mimeType  String
+  size      Int
+  data      Bytes
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("documents")
+}
+
+model TextDoc {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("text_docs")
+}
+
+model Setting {
+  key   String @id
+  value String
+
+  @@map("settings")
 }
 
 model ApplicationEvent {
