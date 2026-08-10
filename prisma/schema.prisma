@@ -4,7 +4,10 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // Pooled (runtime) e direta (migrations). Na Vercel, o Neon injeta esses
+  // nomes; localmente os dois apontam para o mesmo Postgres do Docker.
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 enum Section {

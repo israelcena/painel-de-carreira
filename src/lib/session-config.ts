@@ -13,8 +13,8 @@ export const sessionOptions: SessionOptions = {
   cookieName: "painel_sessao",
   ttl: 60 * 60 * 24 * 30, // 30 dias
   cookieOptions: {
-    // A aplicação roda em http://localhost (Docker); secure=true bloquearia o cookie.
-    secure: false,
+    // Cookie seguro na Vercel (HTTPS); em http://localhost (Docker) precisa ser false.
+    secure: !!process.env.VERCEL,
     httpOnly: true,
     sameSite: "lax",
   },

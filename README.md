@@ -42,6 +42,21 @@ As migrations e o seed das etapas rodam automaticamente na inicialização do co
 - **Arquivar** vagas (saem do quadro, continuam nas métricas) e desarquivar pelo Histórico
 - **Responsivo**: do celular (navegação inferior, uma coluna por vez com swipe) a telas ultrawide (todas as colunas visíveis)
 
+## Deploy na Vercel (com banco Neon)
+
+O projeto também roda na Vercel usando Postgres do Neon via Marketplace:
+
+```bash
+vercel link
+vercel integration add neon      # injeta POSTGRES_PRISMA_URL / POSTGRES_URL_NON_POOLING
+vercel env add APP_USER production
+vercel env add APP_PASSWORD production
+vercel env add SESSION_SECRET production
+vercel deploy --prod
+```
+
+O `vercel.json` executa `prisma migrate deploy` + seed a cada build (idempotente). Os uploads de currículo ficam no próprio Postgres, então funcionam igualmente na Vercel e no Docker.
+
 ## Desenvolvimento local (sem Docker para o app)
 
 ```bash

@@ -1,0 +1,10 @@
+# Segredos locais nunca sobem no deploy (a Vercel usa as envs do projeto)
+.env
+.env.*
+!.env.example
+
+# Artefatos do self-host que não fazem sentido na Vercel
+Dockerfile
+compose.yml
+.dockerignore
+.claude

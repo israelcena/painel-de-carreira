@@ -22,7 +22,9 @@ services:
     ports:
       - "${APP_PORT:-3000}:3000"
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-painel}:${POSTGRES_PASSWORD:-painel}@db:5432/${POSTGRES_DB:-painel}
+      # Mesmos nomes usados na Vercel/Neon; localmente ambos apontam pro mesmo banco
+      POSTGRES_PRISMA_URL: postgresql://${POSTGRES_USER:-painel}:${POSTGRES_PASSWORD:-painel}@db:5432/${POSTGRES_DB:-painel}
+      POSTGRES_URL_NON_POOLING: postgresql://${POSTGRES_USER:-painel}:${POSTGRES_PASSWORD:-painel}@db:5432/${POSTGRES_DB:-painel}
       APP_USER: ${APP_USER:-admin}
       APP_PASSWORD: ${APP_PASSWORD:-admin123}
       SESSION_SECRET: ${SESSION_SECRET:-mude-este-segredo-para-um-valor-aleatorio-de-32-ou-mais-caracteres}
