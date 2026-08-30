@@ -7,9 +7,11 @@ import {
   Clock,
   ExternalLink,
   FileText,
+  GripVertical,
   MessageSquareText,
   Send,
 } from "lucide-react";
+import { useRef } from "react";
 import { REJECTION_REASON_LABELS } from "@/lib/domain";
 import { daysSince, formatDate } from "@/lib/format";
 import type { AppCard } from "@/lib/types";
@@ -107,6 +109,7 @@ export function CardBody({
             rel="noreferrer noopener"
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
+            onPointerUp={(e) => e.stopPropagation()}
             title="Abrir vaga"
             className="ml-auto rounded-md p-1 transition hover:bg-panel hover:text-brand"
           >
@@ -138,6 +141,19 @@ export function ApplicationCard({
     isDragging,
   } = useSortable({ id: app.id, disabled });
 
+  // Guarda onde o dedo/mouse começou para distinguir toque de scroll/arraste
+  const pointerStart = useRef<{ x: number; y: number } | null>(null);
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    const start = pointerStart.current;
+    pointerStart.current = null;
+    if (isDragging) return;
+    if (!start) return;
+    const moved =
+      Math.abs(e.clientX - start.x) > 8 || Math.abs(e.clientY - start.y) > 8;
+    if (!moved) onOpen(app);
+  };
+
   return (
     <article
       ref={setNodeRef}
@@ -146,15 +162,25 @@ export function ApplicationCard({
         transition,
       }}
       {...attributes}
-      {...listeners}
-      onClick={() => {
-        if (!isDragging) onOpen(app);
+      onPointerDown={(e) => {
+        pointerStart.current = { x: e.clientX, y: e.clientY };
       }}
-      className={`cursor-pointer touch-manipulation rounded-lg bg-white p-3 shadow-card transition-shadow hover:shadow-float ${
+      onPointerUp={handlePointerUp}
+      className={`relative cursor-pointer touch-manipulation select-none rounded-lg bg-white p-3 pr-9 shadow-card transition-all duration-150 hover:shadow-float active:scale-[0.98] active:bg-panel ${
         isDragging ? "opacity-40" : ""
       }`}
     >
       <CardBody app={app} isRejectionColumn={isRejectionColumn} />
+      <button
+        type="button"
+        {...listeners}
+        aria-label="Arrastar card"
+        onClick={(e) => e.stopPropagation()}
+        onPointerUp={(e) => e.stopPropagation()}
+        className="absolute right-1.5 top-1/2 -translate-y-1/2 cursor-grab touch-none select-none rounded-md p-1.5 text-muted transition hover:bg-panel hover:text-ink active:cursor-grabbing"
+      >
+        <GripVertical size={16} strokeWidth={2.5} />
+      </button>
     </article>
   );
 }

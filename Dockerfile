@@ -1,13 +1,15 @@
 # syntax=docker/dockerfile:1
 
 FROM node:24-alpine AS base
-RUN apk add --no-cache openssl libc6-compat
+RUN apk add --no-cache openssl libc6-compat unzip curl bash \
+    && curl -fsSL https://bun.sh/install | bash \
+    && mv /root/.bun/bin/bun /usr/local/bin/
 
 # ── Dependências ─────────────────────────────────────────────────────
 FROM base AS deps
 WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
 # ── Build ─────────────────────────────────────────────────────────────
 FROM base AS builder
@@ -23,7 +25,7 @@ RUN npm run build
 # instalar completo em um diretório isolado evita cópias frágeis.
 FROM base AS migrate
 WORKDIR /migrate
-RUN npm init -y >/dev/null && npm install --no-audit --no-fund prisma@6.19.3
+RUN bun init -y >/dev/null && bun add prisma@6.19.3
 
 # ── Runtime ───────────────────────────────────────────────────────────
 FROM base AS runner
