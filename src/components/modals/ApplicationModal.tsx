@@ -22,7 +22,6 @@ import {
   PRIORITY_LABELS,
   PRIORITY_ORDER,
   REJECTION_REASON_LABELS,
-  SECTION_LABELS,
   WORK_MODEL_LABELS,
 } from "@/lib/domain";
 import { describeEvent, EVENT_COLORS } from "@/lib/events";
@@ -36,7 +35,6 @@ import type {
   AppCard,
   EventDTO,
   Priority,
-  Section,
   StageDTO,
   SwotItemDTO,
   WorkModel,
@@ -58,11 +56,10 @@ function DetailsTab({
   onClose: () => void;
   onMove: (app: AppCard, toStageId: string) => void;
 }) {
-  const [section, setSection] = useState<Section>(app.section);
   const [company, setCompany] = useState(app.company);
   const [roleTitle, setRoleTitle] = useState(app.roleTitle);
   const [priority, setPriority] = useState<Priority>(app.priority);
-  const [countryCode, setCountryCode] = useState(app.countryCode ?? "");
+  const [countryCode, setCountryCode] = useState(app.countryCode);
   const [platform, setPlatform] = useState(app.platform ?? "");
   const [appliedAt, setAppliedAt] = useState(dateToInput(app.appliedAt));
   const [workModel, setWorkModel] = useState<WorkModel | "">(
@@ -91,11 +88,10 @@ function DetailsTab({
     setError(null);
     startTransition(async () => {
       const result = await updateApplication(app.id, {
-        section,
         company,
         roleTitle,
         priority,
-        countryCode: countryCode || null,
+        countryCode,
         platform: platform || null,
         appliedAt: appliedAt || null,
         workModel: workModel || null,
@@ -188,19 +184,13 @@ function DetailsTab({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Seção" htmlFor="ed-section">
-          <select
-            id="ed-section"
-            value={section}
-            onChange={(e) => setSection(e.target.value as Section)}
-            className={inputCls}
-          >
-            {(Object.keys(SECTION_LABELS) as Section[]).map((key) => (
-              <option key={key} value={key}>
-                {SECTION_LABELS[key]}
-              </option>
-            ))}
-          </select>
+        <Field label="País" htmlFor="ed-country" required>
+          <CountrySelect
+            id="ed-country"
+            value={countryCode}
+            onChange={setCountryCode}
+            required
+          />
         </Field>
         <Field label="Mover para etapa" htmlFor="ed-stage">
           <select
@@ -219,17 +209,6 @@ function DetailsTab({
           </select>
         </Field>
       </div>
-
-      {section === "INTERNACIONAL" && (
-        <Field label="País" htmlFor="ed-country" required>
-          <CountrySelect
-            id="ed-country"
-            value={countryCode}
-            onChange={setCountryCode}
-            required
-          />
-        </Field>
-      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Prioridade" htmlFor="ed-priority">

@@ -19,7 +19,7 @@ export default async function proxy(request: NextRequest) {
   }
 
   if (session.loggedIn && isLoginPage) {
-    return NextResponse.redirect(new URL("/board/nacional", request.url));
+    return NextResponse.redirect(new URL("/board", request.url));
   }
 
   return response;

@@ -3,14 +3,16 @@
 import { ArchiveRestore, Loader2 } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 import { unarchiveApplication } from "@/app/actions/applications";
-import { SECTION_LABELS } from "@/lib/domain";
+import { matchesOrigin } from "@/lib/boardFilters";
+import { countryName } from "@/lib/countries";
+import { ORIGIN_LABELS } from "@/lib/domain";
 import {
   describeEvent,
   EVENT_COLORS,
   EVENT_TYPE_LABELS,
 } from "@/lib/events";
 import { formatDateTime, relativeTime } from "@/lib/format";
-import type { EventDTO, Section, StageDTO } from "@/lib/types";
+import type { EventDTO, Origin, StageDTO } from "@/lib/types";
 import { useSearchQuery } from "@/lib/useSearchQuery";
 import { inputCls } from "@/components/ui/fields";
 import { Flag } from "@/components/ui/Flag";
@@ -20,8 +22,7 @@ export interface HistoryEvent extends EventDTO {
     id: string;
     company: string;
     roleTitle: string;
-    section: Section;
-    countryCode: string | null;
+    countryCode: string;
     archived: boolean;
   };
 }
@@ -56,7 +57,7 @@ export function HistoryList({
   events: HistoryEvent[];
   stages: StageDTO[];
 }) {
-  const [secao, setSecao] = useState<"" | Section>("");
+  const [origem, setOrigem] = useState<"" | Origin>("");
   const [tipo, setTipo] = useState("");
   const q = useSearchQuery().trim().toLowerCase();
 
@@ -66,7 +67,7 @@ export function HistoryList({
   );
 
   const filtered = events.filter((event) => {
-    if (secao && event.application.section !== secao) return false;
+    if (!matchesOrigin(event.application.countryCode, origem)) return false;
     if (tipo && event.type !== tipo) return false;
     if (
       q &&
@@ -84,15 +85,15 @@ export function HistoryList({
           Histórico
         </h1>
         <select
-          value={secao}
-          onChange={(e) => setSecao(e.target.value as "" | Section)}
+          value={origem}
+          onChange={(e) => setOrigem(e.target.value as "" | Origin)}
           className={`${inputCls} w-auto`}
-          aria-label="Filtrar por seção"
+          aria-label="Filtrar por origem"
         >
-          <option value="">Todas as seções</option>
-          {(Object.keys(SECTION_LABELS) as Section[]).map((s) => (
-            <option key={s} value={s}>
-              {SECTION_LABELS[s]}
+          <option value="">Brasil e exterior</option>
+          {(Object.keys(ORIGIN_LABELS) as Origin[]).map((o) => (
+            <option key={o} value={o}>
+              {ORIGIN_LABELS[o]}
             </option>
           ))}
         </select>
@@ -156,7 +157,7 @@ export function HistoryList({
                 >
                   {formatDateTime(event.createdAt)} ·{" "}
                   {relativeTime(event.createdAt)} ·{" "}
-                  {SECTION_LABELS[event.application.section]}
+                  {countryName(event.application.countryCode)}
                 </p>
               </div>
               {event.type === "ARCHIVED" && event.application.archived && (

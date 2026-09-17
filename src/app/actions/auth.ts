@@ -26,7 +26,7 @@ export async function login(
   session.user = user;
   await session.save();
 
-  redirect("/board/nacional");
+  redirect("/board");
 }
 
 export async function logout() {

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { HistoryList, type HistoryEvent } from "@/components/history/HistoryList";
 import { prisma } from "@/lib/db";
-import type { Section, StageDTO } from "@/lib/types";
+import type { StageDTO } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Histórico" };
@@ -18,7 +18,6 @@ export default async function HistoricoPage() {
             id: true,
             company: true,
             roleTitle: true,
-            section: true,
             countryCode: true,
             archivedAt: true,
           },
@@ -38,7 +37,6 @@ export default async function HistoricoPage() {
       id: event.application.id,
       company: event.application.company,
       roleTitle: event.application.roleTitle,
-      section: event.application.section as Section,
       countryCode: event.application.countryCode,
       archived: event.application.archivedAt !== null,
     },

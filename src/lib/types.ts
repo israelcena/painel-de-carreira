@@ -1,8 +1,8 @@
 // Tipos serializáveis compartilhados entre server e client.
 // Espelham os enums do Prisma sem importar @prisma/client no bundle do cliente.
 
-export type Section = "NACIONAL" | "INTERNACIONAL";
-export type SectionSlug = "nacional" | "internacional";
+/** Recorte geográfico derivado do país: Brasil (countryCode BR) ou exterior. */
+export type Origin = "BRASIL" | "EXTERIOR";
 export type Priority = "BAIXA" | "MEDIA" | "ALTA";
 export type WorkModel = "REMOTO" | "HIBRIDO" | "PRESENCIAL";
 
@@ -39,7 +39,6 @@ export interface StageDTO {
 
 export interface AppCard {
   id: string;
-  section: Section;
   stageId: string;
   position: number;
   company: string;
@@ -48,7 +47,8 @@ export interface AppCard {
   platform: string | null;
   locationCity: string | null;
   workModel: WorkModel | null;
-  countryCode: string | null;
+  /** ISO-3166 alpha-2, sempre presente (BR para vagas no Brasil). */
+  countryCode: string;
   salary: string | null;
   priority: Priority;
   appliedAt: Date | null;
@@ -106,7 +106,6 @@ export interface EventWithApp extends EventDTO {
     id: string;
     company: string;
     roleTitle: string;
-    section: Section;
-    countryCode: string | null;
+    countryCode: string;
   };
 }

@@ -10,11 +10,6 @@ datasource db {
   directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
-enum Section {
-  NACIONAL
-  INTERNACIONAL
-}
-
 enum Priority {
   BAIXA
   MEDIA
@@ -73,11 +68,10 @@ model Stage {
 }
 
 model Application {
-  id       String  @id @default(cuid())
-  section  Section
-  stage    Stage   @relation(fields: [stageId], references: [id])
+  id       String @id @default(cuid())
+  stage    Stage  @relation(fields: [stageId], references: [id])
   stageId  String
-  position Float   @default(0)
+  position Float  @default(0)
 
   company      String
   roleTitle    String
@@ -85,7 +79,9 @@ model Application {
   platform     String?
   locationCity String?
   workModel    WorkModel?
-  countryCode  String?
+  // ISO-3166 alpha-2; obrigatório desde a migration remove_section_country_required
+  // (vagas nacionais antigas viraram "BR"). Brasil × exterior é derivado daqui.
+  countryCode  String
   salary       String?
   priority     Priority   @default(MEDIA)
   appliedAt    DateTime?
@@ -109,7 +105,7 @@ model Application {
   events    ApplicationEvent[]
   swotItems SwotItem[]
 
-  @@index([section, stageId])
+  @@index([stageId])
   @@map("applications")
 }
 
