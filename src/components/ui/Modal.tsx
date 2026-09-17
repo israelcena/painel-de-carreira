@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 export function Modal({
@@ -19,6 +19,8 @@ export function Modal({
   children: React.ReactNode;
   wide?: boolean;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -31,6 +33,20 @@ export function Modal({
       document.body.style.overflow = "";
     };
   }, [open, onClose]);
+
+  // Foco: guarda quem abriu o modal, move o foco para o elemento marcado com
+  // `data-autofocus` (se houver) e devolve o foco ao abridor quando fechar.
+  // O conteúdo não deve usar o atributo `autoFocus`, que rodaria antes desta captura.
+  useEffect(() => {
+    if (!open) return;
+    const opener = document.activeElement as HTMLElement | null;
+    panelRef.current
+      ?.querySelector<HTMLElement>("[data-autofocus]")
+      ?.focus();
+    return () => {
+      if (opener && document.contains(opener)) opener.focus();
+    };
+  }, [open]);
 
   if (!open) return null;
 
@@ -45,6 +61,7 @@ export function Modal({
         onClick={onClose}
       />
       <div
+        ref={panelRef}
         className={`nice-scroll relative z-10 max-h-[94dvh] w-full overflow-y-auto rounded-t-2xl bg-white shadow-float md:rounded-2xl ${
           wide ? "md:max-w-2xl" : "md:max-w-lg"
         }`}

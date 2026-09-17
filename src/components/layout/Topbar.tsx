@@ -8,7 +8,7 @@ export function Topbar({ user }: { user: string }) {
   return (
     <header className="sticky top-0 z-40 flex h-12 items-stretch bg-gradient-to-r from-brand-violet via-brand to-brand-blue shadow-card">
       <Link
-        href="/board/nacional"
+        href="/board"
         className="flex items-center gap-2 bg-brand-deep px-3 text-white sm:px-4"
       >
         <BriefcaseBusiness size={18} strokeWidth={2.4} />

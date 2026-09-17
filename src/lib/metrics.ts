@@ -1,12 +1,7 @@
 import { prisma } from "./db";
 import { REJECTION_REASON_LABELS } from "./domain";
 import { formatMonth } from "./format";
-import type {
-  EventWithApp,
-  RejectionReason,
-  Section,
-  StageDTO,
-} from "./types";
+import type { EventWithApp, RejectionReason, StageDTO } from "./types";
 
 export interface KpiData {
   total: number;
@@ -20,8 +15,7 @@ export interface KpiData {
 export interface MonthPoint {
   key: string;
   label: string;
-  nacional: number;
-  internacional: number;
+  total: number;
 }
 
 export interface FunnelPoint {
@@ -52,14 +46,6 @@ export interface CountryPoint {
   rejeitadas: number;
 }
 
-export interface SectionSummary {
-  section: Section;
-  total: number;
-  entrevistas: number;
-  ofertas: number;
-  rejeitadas: number;
-}
-
 export interface WeeklyGoalData {
   goal: number;
   count: number;
@@ -69,8 +55,7 @@ export interface NextActionItem {
   id: string;
   company: string;
   roleTitle: string;
-  section: Section;
-  countryCode: string | null;
+  countryCode: string;
   note: string | null;
   date: Date;
   overdue: boolean;
@@ -84,7 +69,6 @@ export interface DashboardData {
   motivos: ReasonPoint[];
   tempoPorEtapa: StageTimePoint[];
   porPais: CountryPoint[];
-  porSecao: SectionSummary[];
   atividadeRecente: EventWithApp[];
   metaSemana: WeeklyGoalData;
   proximasAcoes: NextActionItem[];
@@ -97,16 +81,11 @@ const ENTER_STAGE_EVENTS = new Set([
   "REJECTED",
 ]);
 
-export async function getDashboardData(
-  filter?: Section
-): Promise<DashboardData> {
-  const appWhere = filter ? { section: filter } : {};
-
+export async function getDashboardData(): Promise<DashboardData> {
   const [stagesRaw, apps, events, goalSetting] = await Promise.all([
     prisma.stage.findMany({ orderBy: { order: "asc" } }),
-    prisma.application.findMany({ where: appWhere }),
+    prisma.application.findMany(),
     prisma.applicationEvent.findMany({
-      where: filter ? { application: { section: filter } } : {},
       orderBy: { createdAt: "asc" },
       include: {
         application: {
@@ -114,7 +93,6 @@ export async function getDashboardData(
             id: true,
             company: true,
             roleTitle: true,
-            section: true,
             countryCode: true,
           },
         },
@@ -196,12 +174,7 @@ export async function getDashboardData(
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const point: MonthPoint = {
-      key,
-      label: formatMonth(d),
-      nacional: 0,
-      internacional: 0,
-    };
+    const point: MonthPoint = { key, label: formatMonth(d), total: 0 };
     months.push(point);
     monthIndex.set(key, point);
   }
@@ -209,9 +182,7 @@ export async function getDashboardData(
     const date = app.appliedAt ?? app.createdAt;
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
     const point = monthIndex.get(key);
-    if (!point) continue;
-    if (app.section === "NACIONAL") point.nacional += 1;
-    else point.internacional += 1;
+    if (point) point.total += 1;
   }
 
   // ── Funil: quantas aplicações chegaram a cada etapa ─────────────────
@@ -275,10 +246,9 @@ export async function getDashboardData(
     };
   });
 
-  // ── Por país (somente internacionais) ───────────────────────────────
+  // ── Por país (Brasil incluído — é o único recorte geográfico) ───────
   const countryMap = new Map<string, CountryPoint>();
   for (const app of apps) {
-    if (app.section !== "INTERNACIONAL" || !app.countryCode) continue;
     const point = countryMap.get(app.countryCode) ?? {
       code: app.countryCode,
       total: 0,
@@ -294,25 +264,6 @@ export async function getDashboardData(
     countryMap.set(app.countryCode, point);
   }
   const porPais = [...countryMap.values()].sort((a, b) => b.total - a.total);
-
-  // ── Comparativo por seção ───────────────────────────────────────────
-  const porSecao: SectionSummary[] = (
-    ["NACIONAL", "INTERNACIONAL"] as Section[]
-  ).map((section) => {
-    const sectionApps = apps.filter((a) => a.section === section);
-    return {
-      section,
-      total: sectionApps.length,
-      entrevistas: sectionApps.filter(
-        (a) => (maxReached.get(a.id) ?? 0) >= entrevistaOrder
-      ).length,
-      ofertas: sectionApps.filter(
-        (a) => (maxReached.get(a.id) ?? 0) >= ofertaOrder
-      ).length,
-      rejeitadas: sectionApps.filter((a) => a.stageId === rejectionStage?.id)
-        .length,
-    };
-  });
 
   // ── Meta semanal (segunda a domingo) ────────────────────────────────
   const goal = Math.max(1, parseInt(goalSetting?.value ?? "10", 10) || 10);
@@ -347,7 +298,6 @@ export async function getDashboardData(
       id: app.id,
       company: app.company,
       roleTitle: app.roleTitle,
-      section: app.section as Section,
       countryCode: app.countryCode,
       note: app.nextActionNote,
       date: app.nextActionAt as Date,
@@ -371,7 +321,6 @@ export async function getDashboardData(
         id: event.application.id,
         company: event.application.company,
         roleTitle: event.application.roleTitle,
-        section: event.application.section as Section,
         countryCode: event.application.countryCode,
       },
     }));
@@ -384,7 +333,6 @@ export async function getDashboardData(
     motivos,
     tempoPorEtapa,
     porPais,
-    porSecao,
     atividadeRecente,
     metaSemana: { goal, count: weekCount },
     proximasAcoes,

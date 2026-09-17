@@ -6,24 +6,23 @@ import {
   PLATFORM_SUGGESTIONS,
   PRIORITY_LABELS,
   PRIORITY_ORDER,
-  SECTION_LABELS,
   WORK_MODEL_LABELS,
 } from "@/lib/domain";
 import { dateToInput } from "@/lib/format";
-import type { Priority, Section, StageDTO, WorkModel } from "@/lib/types";
+import type { Priority, StageDTO, WorkModel } from "@/lib/types";
 import { CountrySelect } from "@/components/ui/CountrySelect";
 import { ErrorBox, Field, inputCls } from "@/components/ui/fields";
 import { Modal } from "@/components/ui/Modal";
 
 function FormBody({
-  section,
   stages,
   defaultStageId,
+  defaultCountryCode,
   onClose,
 }: {
-  section: Section;
   stages: StageDTO[];
   defaultStageId: string | null;
+  defaultCountryCode: string;
   onClose: () => void;
 }) {
   const selectableStages = stages.filter((stage) => !stage.isRejection);
@@ -33,7 +32,7 @@ function FormBody({
     defaultStageId ?? selectableStages[0]?.id ?? ""
   );
   const [priority, setPriority] = useState<Priority>("MEDIA");
-  const [countryCode, setCountryCode] = useState("");
+  const [countryCode, setCountryCode] = useState(defaultCountryCode);
   const [platform, setPlatform] = useState("");
   const [appliedAt, setAppliedAt] = useState(dateToInput(new Date()));
   const [workModel, setWorkModel] = useState<WorkModel | "">("");
@@ -52,10 +51,9 @@ function FormBody({
       const result = await createApplication({
         company,
         roleTitle,
-        section,
         stageId,
         priority,
-        countryCode: countryCode || null,
+        countryCode,
         platform: platform || null,
         appliedAt: appliedAt || null,
         workModel: workModel || null,
@@ -103,16 +101,14 @@ function FormBody({
         </Field>
       </div>
 
-      {section === "INTERNACIONAL" && (
-        <Field label="País" htmlFor="nv-country" required>
-          <CountrySelect
-            id="nv-country"
-            value={countryCode}
-            onChange={setCountryCode}
-            required
-          />
-        </Field>
-      )}
+      <Field label="País" htmlFor="nv-country" required>
+        <CountrySelect
+          id="nv-country"
+          value={countryCode}
+          onChange={setCountryCode}
+          required
+        />
+      </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Etapa" htmlFor="nv-stage">
@@ -269,31 +265,26 @@ function FormBody({
 
 export function NewApplicationModal({
   open,
-  section,
   stages,
   defaultStageId,
+  defaultCountryCode,
   onClose,
 }: {
   open: boolean;
-  section: Section;
   stages: StageDTO[];
   defaultStageId: string | null;
+  /** País pré-selecionado ("BR" por padrão; vazio quando a visão Exterior está ativa). */
+  defaultCountryCode: string;
   onClose: () => void;
 }) {
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title="Nova vaga"
-      subtitle={`Seção ${SECTION_LABELS[section]}`}
-      wide
-    >
+    <Modal open={open} onClose={onClose} title="Nova vaga" wide>
       {/* key força reset do formulário a cada abertura */}
       <FormBody
         key={String(open)}
-        section={section}
         stages={stages}
         defaultStageId={defaultStageId}
+        defaultCountryCode={defaultCountryCode}
         onClose={onClose}
       />
     </Modal>

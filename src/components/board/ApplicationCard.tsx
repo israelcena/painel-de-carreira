@@ -3,6 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
+  Archive,
   CalendarClock,
   Clock,
   ExternalLink,
@@ -126,11 +127,13 @@ export function ApplicationCard({
   isRejectionColumn,
   disabled,
   onOpen,
+  onArchive,
 }: {
   app: AppCard;
   isRejectionColumn: boolean;
   disabled: boolean;
   onOpen: (app: AppCard) => void;
+  onArchive: (app: AppCard) => void;
 }) {
   const {
     attributes,
@@ -171,6 +174,21 @@ export function ApplicationCard({
       }`}
     >
       <CardBody app={app} isRejectionColumn={isRejectionColumn} />
+      {/* Arquivar rápido: para a propagação para não abrir o modal nem iniciar arraste */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onArchive(app);
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+        onPointerUp={(e) => e.stopPropagation()}
+        aria-label="Arquivar vaga"
+        title="Arquivar vaga"
+        className="absolute right-1.5 top-1.5 rounded-md p-1 text-muted transition hover:bg-panel hover:text-brand"
+      >
+        <Archive size={13} strokeWidth={2.5} />
+      </button>
       <button
         type="button"
         {...listeners}

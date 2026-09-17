@@ -44,6 +44,16 @@ export function dateFromInput(value: string): Date {
   return new Date(`${value}T12:00:00`);
 }
 
+/** Início do dia local de "2026-08-10" (00:00:00.000) — limite inferior de filtros. */
+export function startOfDayFromInput(value: string): Date {
+  return new Date(`${value}T00:00:00`);
+}
+
+/** Fim do dia local de "2026-08-10" (23:59:59.999) — limite superior de filtros. */
+export function endOfDayFromInput(value: string): Date {
+  return new Date(`${value}T23:59:59.999`);
+}
+
 /** Converte Date em valor para <input type="date"> */
 export function dateToInput(date: Date | string | null | undefined): string {
   if (!date) return "";

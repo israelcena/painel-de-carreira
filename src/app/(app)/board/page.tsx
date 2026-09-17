@@ -1,30 +1,16 @@
-import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { Board } from "@/components/board/Board";
 import { prisma } from "@/lib/db";
-import { SECTION_BY_SLUG, SECTION_LABELS } from "@/lib/domain";
-import type { AppCard, SectionSlug, StageDTO } from "@/lib/types";
+import type { AppCard, StageDTO } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Quadro" };
 
-export async function generateMetadata({
-  params,
-}: PageProps<"/board/[section]">) {
-  const { section: slug } = await params;
-  const section = SECTION_BY_SLUG[slug as SectionSlug];
-  return { title: section ? `Quadro ${SECTION_LABELS[section]}` : "Quadro" };
-}
-
-export default async function BoardPage({
-  params,
-}: PageProps<"/board/[section]">) {
-  const { section: slug } = await params;
-  const section = SECTION_BY_SLUG[slug as SectionSlug];
-  if (!section) notFound();
-
+export default async function BoardPage() {
   const [stages, applications] = await Promise.all([
     prisma.stage.findMany({ orderBy: { order: "asc" } }),
     prisma.application.findMany({
-      where: { section, archivedAt: null },
+      where: { archivedAt: null },
       orderBy: { position: "asc" },
       include: {
         _count: {
@@ -44,7 +30,6 @@ export default async function BoardPage({
 
   const cards: AppCard[] = applications.map((app) => ({
     id: app.id,
-    section: app.section,
     stageId: app.stageId,
     position: app.position,
     company: app.company,
@@ -71,7 +56,5 @@ export default async function BoardPage({
     stageEnteredAt: app.events[0]?.createdAt ?? app.createdAt,
   }));
 
-  return (
-    <Board section={section} stages={stages as StageDTO[]} apps={cards} />
-  );
+  return <Board stages={stages as StageDTO[]} apps={cards} />;
 }

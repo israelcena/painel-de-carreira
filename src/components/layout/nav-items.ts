@@ -15,7 +15,7 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { href: "/board/nacional", match: "/board", icon: SquareKanban, label: "Quadros" },
+  { href: "/board", match: "/board", icon: SquareKanban, label: "Quadro" },
   { href: "/dashboard", match: "/dashboard", icon: ChartColumn, label: "Dashboard" },
   { href: "/planejamento", match: "/planejamento", icon: Target, label: "Planejar" },
   { href: "/documentos", match: "/documentos", icon: FileText, label: "Docs" },

@@ -1,33 +1,23 @@
 import type {
+  Origin,
   Priority,
   RejectionReason,
-  Section,
-  SectionSlug,
   SwotQuadrant,
   WorkModel,
 } from "./types";
 
-export const SECTION_LABELS: Record<Section, string> = {
-  NACIONAL: "Nacional",
-  INTERNACIONAL: "Internacional",
+/** Rótulos do recorte Brasil × exterior (derivado de countryCode === "BR"). */
+export const ORIGIN_LABELS: Record<Origin, string> = {
+  BRASIL: "Brasil",
+  EXTERIOR: "Exterior",
 };
 
-export const SECTION_BY_SLUG: Record<SectionSlug, Section> = {
-  nacional: "NACIONAL",
-  internacional: "INTERNACIONAL",
-};
+/** Código ISO do Brasil — base da distinção Brasil × exterior. */
+export const BRAZIL_CODE = "BR";
 
-export const SLUG_BY_SECTION: Record<Section, SectionSlug> = {
-  NACIONAL: "nacional",
-  INTERNACIONAL: "internacional",
-};
-
-// Cores das séries do dashboard — par validado (CVD ΔE 16,1; deutan/tritan OK).
-// O azul fica abaixo de 3:1 no branco: gráficos que o usam trazem rótulos visíveis.
-export const SECTION_COLORS: Record<Section, string> = {
-  NACIONAL: "#6a5cd8",
-  INTERNACIONAL: "#57a5f5",
-};
+// Cor da série do gráfico mensal (roxo da marca). Contraste no branco fica
+// abaixo de 3:1, então o gráfico mantém rótulos de valor visíveis nas barras.
+export const CHART_SERIES_COLOR = "#6a5cd8";
 
 export const PRIORITY_LABELS: Record<Priority, string> = {
   BAIXA: "Baixa",

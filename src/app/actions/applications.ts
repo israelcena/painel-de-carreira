@@ -1,7 +1,8 @@
 "use server";
 
-import type { Prisma } from "@prisma/client";
+import type { EventType, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { isKnownCountry } from "@/lib/countries";
 import { prisma } from "@/lib/db";
 import { dateFromInput } from "@/lib/format";
 import { assertSession } from "@/lib/session";
@@ -9,7 +10,6 @@ import type {
   EventDTO,
   Priority,
   RejectionReason,
-  Section,
   WorkModel,
 } from "@/lib/types";
 
@@ -19,7 +19,6 @@ export type ActionResult<T = undefined> =
 
 const PRIORITIES: Priority[] = ["BAIXA", "MEDIA", "ALTA"];
 const WORK_MODELS: WorkModel[] = ["REMOTO", "HIBRIDO", "PRESENCIAL"];
-const SECTIONS: Section[] = ["NACIONAL", "INTERNACIONAL"];
 const REJECTION_REASONS: RejectionReason[] = [
   "SEM_RETORNO",
   "PERFIL_NAO_ADERENTE",
@@ -45,7 +44,6 @@ const FIELD_LABELS: Record<string, string> = {
   priority: "prioridade",
   appliedAt: "data de aplicação",
   notes: "observações",
-  section: "seção",
   jobDescription: "descrição da vaga",
   applicationUrl: "link da candidatura",
   nextActionNote: "próxima ação",
@@ -55,13 +53,13 @@ const FIELD_LABELS: Record<string, string> = {
 export interface ApplicationInput {
   company: string;
   roleTitle: string;
-  section: Section;
+  /** ISO-3166 alpha-2 — obrigatório em toda vaga ("BR" para vagas no Brasil). */
+  countryCode: string;
   stageId?: string;
   jobUrl?: string | null;
   platform?: string | null;
   locationCity?: string | null;
   workModel?: WorkModel | null;
-  countryCode?: string | null;
   salary?: string | null;
   priority?: Priority;
   appliedAt?: string | null; // "YYYY-MM-DD"
@@ -87,16 +85,109 @@ function refresh() {
   revalidatePath("/", "layout");
 }
 
-async function endOfColumnPosition(
-  section: Section,
-  stageId: string
-): Promise<number> {
-  const last = await prisma.application.findFirst({
-    where: { section, stageId, archivedAt: null },
-    orderBy: { position: "desc" },
+/**
+ * Normaliza e valida o país. Toda vaga tem país desde a migration
+ * remove_section_country_required (o quadro é único; Brasil × exterior deriva daqui).
+ */
+function parseCountry(
+  value: string | null | undefined
+): { ok: true; code: string } | { ok: false; error: string } {
+  const code = clean(value)?.toUpperCase();
+  if (!code || !isKnownCountry(code)) {
+    return { ok: false, error: "Selecione o país da vaga." };
+  }
+  return { ok: true, code };
+}
+
+/** Posição acima do primeiro card da coluna: entradas novas ficam no topo da raia. */
+async function startOfColumnPosition(stageId: string): Promise<number> {
+  const first = await prisma.application.findFirst({
+    where: { stageId, archivedAt: null },
+    orderBy: { position: "asc" },
     select: { position: true },
   });
-  return (last?.position ?? 0) + 1024;
+  return (first?.position ?? 2048) - 1024;
+}
+
+const STAGE_ENTRY_EVENTS: EventType[] = [
+  "CREATED",
+  "STAGE_CHANGED",
+  "REJECTED",
+  "RESTORED",
+];
+
+/**
+ * Reatribui `position` dos cards ativos de uma raia para refletir a ordem
+ * "entrou na etapa mais recentemente primeiro" (desempate: cadastro mais novo).
+ * Sem evento: reordenar dentro da raia é silencioso, como em moveApplication.
+ */
+async function reorderStage(stageId: string): Promise<void> {
+  const apps = await prisma.application.findMany({
+    where: { stageId, archivedAt: null },
+    select: {
+      id: true,
+      createdAt: true,
+      events: {
+        where: { type: { in: STAGE_ENTRY_EVENTS } },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { createdAt: true },
+      },
+    },
+  });
+
+  const ordered = apps
+    .map((app) => ({
+      id: app.id,
+      enteredAt: (app.events[0]?.createdAt ?? app.createdAt).getTime(),
+      createdAt: app.createdAt.getTime(),
+    }))
+    .sort((a, b) => b.enteredAt - a.enteredAt || b.createdAt - a.createdAt);
+
+  if (ordered.length === 0) return;
+
+  await prisma.$transaction(
+    ordered.map((app, index) =>
+      prisma.application.update({
+        where: { id: app.id },
+        data: { position: (index + 1) * 1024 },
+      })
+    )
+  );
+}
+
+export async function reorderStageByRecency(params: {
+  stageId: string;
+}): Promise<ActionResult> {
+  try {
+    await assertSession();
+    const stage = await prisma.stage.findUnique({
+      where: { id: params.stageId },
+      select: { id: true },
+    });
+    if (!stage) return { ok: false, error: "Etapa inválida." };
+
+    await reorderStage(stage.id);
+    refresh();
+    return { ok: true };
+  } catch (error) {
+    return fail(error, "Erro ao ordenar a raia.");
+  }
+}
+
+export async function reorderBoardByRecency(): Promise<ActionResult> {
+  try {
+    await assertSession();
+
+    const stages = await prisma.stage.findMany({ select: { id: true } });
+    for (const stage of stages) {
+      await reorderStage(stage.id);
+    }
+    refresh();
+    return { ok: true };
+  } catch (error) {
+    return fail(error, "Erro ao ordenar o quadro.");
+  }
 }
 
 export async function createApplication(
@@ -109,13 +200,9 @@ export async function createApplication(
     const roleTitle = clean(input.roleTitle);
     if (!company) return { ok: false, error: "Informe a empresa." };
     if (!roleTitle) return { ok: false, error: "Informe o cargo." };
-    if (!SECTIONS.includes(input.section))
-      return { ok: false, error: "Seção inválida." };
 
-    const countryCode = clean(input.countryCode);
-    if (input.section === "INTERNACIONAL" && !countryCode) {
-      return { ok: false, error: "Selecione o país da vaga internacional." };
-    }
+    const country = parseCountry(input.countryCode);
+    if (!country.ok) return country;
 
     const stage = input.stageId
       ? await prisma.stage.findUnique({ where: { id: input.stageId } })
@@ -128,11 +215,10 @@ export async function createApplication(
       };
     }
 
-    const position = await endOfColumnPosition(input.section, stage.id);
+    const position = await startOfColumnPosition(stage.id);
 
     const created = await prisma.application.create({
       data: {
-        section: input.section,
         stageId: stage.id,
         position,
         company,
@@ -144,7 +230,7 @@ export async function createApplication(
           input.workModel && WORK_MODELS.includes(input.workModel)
             ? input.workModel
             : null,
-        countryCode: input.section === "INTERNACIONAL" ? countryCode : null,
+        countryCode: country.code,
         salary: clean(input.salary),
         priority:
           input.priority && PRIORITIES.includes(input.priority)
@@ -279,7 +365,7 @@ export async function rejectApplication(params: {
       : new Date();
     const position = alreadyRejected
       ? app.position
-      : await endOfColumnPosition(app.section, rejectionStage.id);
+      : await startOfColumnPosition(rejectionStage.id);
 
     await prisma.application.update({
       where: { id: app.id },
@@ -389,36 +475,10 @@ export async function updateApplication(
       setField("nextActionAt", nextActionAt, app.nextActionAt);
     }
 
-    // Seção e país (mudar seção reposiciona no fim da coluna equivalente)
-    const nextSection =
-      input.section && SECTIONS.includes(input.section)
-        ? input.section
-        : app.section;
-    const nextCountry =
-      input.countryCode !== undefined
-        ? clean(input.countryCode)
-        : app.countryCode;
-
-    if (nextSection === "INTERNACIONAL" && !nextCountry) {
-      return { ok: false, error: "Selecione o país da vaga internacional." };
-    }
-
     if (input.countryCode !== undefined) {
-      setField(
-        "countryCode",
-        nextSection === "INTERNACIONAL" ? nextCountry : null,
-        app.countryCode
-      );
-    }
-    if (nextSection !== app.section) {
-      setField("section", nextSection, app.section);
-      if (nextSection === "NACIONAL" && app.countryCode) {
-        (data as Record<string, unknown>).countryCode = null;
-      }
-      (data as Record<string, unknown>).position = await endOfColumnPosition(
-        nextSection,
-        app.stageId
-      );
+      const country = parseCountry(input.countryCode);
+      if (!country.ok) return country;
+      setField("countryCode", country.code, app.countryCode);
     }
 
     if (changed.length === 0) return { ok: true };
@@ -487,10 +547,21 @@ export async function archiveApplication(id: string): Promise<ActionResult> {
 export async function unarchiveApplication(id: string): Promise<ActionResult> {
   try {
     await assertSession();
+    const app = await prisma.application.findUnique({
+      where: { id },
+      select: { stageId: true },
+    });
+    if (!app) return { ok: false, error: "Vaga não encontrada." };
+
+    // Reentra no topo da raia com posição nova: a antiga pode ter sido
+    // reutilizada por "Ordenar por mais recentes" ou por cards criados
+    // enquanto a vaga estava arquivada (as duas rotinas ignoram arquivados).
+    const position = await startOfColumnPosition(app.stageId);
     await prisma.application.update({
       where: { id },
       data: {
         archivedAt: null,
+        position,
         events: { create: { type: "UNARCHIVED" } },
       },
     });

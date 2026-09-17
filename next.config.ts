@@ -14,6 +14,16 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "10mb",
     },
   },
+  async redirects() {
+    return [
+      // Rotas dos antigos quadros por seção (Nacional/Internacional) → quadro único
+      {
+        source: "/board/:section(nacional|internacional)",
+        destination: "/board",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -5,24 +5,47 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Plus } from "lucide-react";
+import { ArrowDownWideNarrow, Loader2, Plus } from "lucide-react";
+import type { BoardFilter, CountryOption } from "@/lib/boardFilters";
 import type { AppCard, StageDTO } from "@/lib/types";
 import { ApplicationCard } from "./ApplicationCard";
+import { FilterPopover } from "./FilterPopover";
 
 export function Column({
   stage,
   cards,
+  total,
+  filter,
+  countries,
   dndDisabled,
+  sortPending,
+  sortActive,
+  onFilterChange,
+  onSortByRecency,
   onAdd,
   onOpen,
+  onArchive,
 }: {
   stage: StageDTO;
+  /** Cards visíveis (já filtrados pela busca e pelos filtros geral/da raia). */
   cards: AppCard[];
+  /** Total de cards da raia, sem filtros. */
+  total: number;
+  filter: BoardFilter;
+  countries: CountryOption[];
   dndDisabled: boolean;
+  /** Alguma ordenação em andamento no quadro (desabilita o botão). */
+  sortPending: boolean;
+  /** Esta raia é a que está sendo ordenada (mostra o spinner). */
+  sortActive: boolean;
+  onFilterChange: (next: BoardFilter) => void;
+  onSortByRecency: () => void;
   onAdd: (stageId: string) => void;
   onOpen: (app: AppCard) => void;
+  onArchive: (app: AppCard) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage.id });
+  const hiddenByFilters = total > 0 && cards.length === 0;
 
   return (
     <section
@@ -33,12 +56,45 @@ export function Column({
         <h2 className="truncate text-sm font-extrabold text-ink">
           {stage.name}
         </h2>
-        <span
-          className="rounded-full bg-white px-2 py-0.5 text-xs font-extrabold"
-          style={{ color: stage.color }}
-        >
-          {cards.length}
-        </span>
+        <div className="flex shrink-0 items-center gap-1">
+          <span
+            className="rounded-full bg-white px-2 py-0.5 text-xs font-extrabold"
+            style={{ color: stage.color }}
+            title={
+              cards.length !== total
+                ? `${cards.length} visíveis de ${total}`
+                : undefined
+            }
+          >
+            {cards.length}
+            {cards.length !== total && (
+              <span className="text-muted">/{total}</span>
+            )}
+          </span>
+          <FilterPopover
+            variant="icon"
+            label={`Filtrar ${stage.name}`}
+            value={filter}
+            onChange={onFilterChange}
+            countries={countries}
+            extraActions={
+              <button
+                type="button"
+                disabled={sortPending || total < 2}
+                onClick={onSortByRecency}
+                title="Reorganiza esta raia pela data de entrada na etapa (mais recente em cima)"
+                className="ml-auto flex items-center gap-1 rounded-lg bg-panel px-2.5 py-1.5 text-xs font-extrabold text-ink-soft transition hover:bg-brand/10 hover:text-brand disabled:opacity-50"
+              >
+                {sortActive ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : (
+                  <ArrowDownWideNarrow size={12} strokeWidth={2.5} />
+                )}
+                Ordenar por mais recentes
+              </button>
+            }
+          />
+        </div>
       </header>
 
       <div
@@ -58,13 +114,16 @@ export function Column({
               isRejectionColumn={stage.isRejection}
               disabled={dndDisabled}
               onOpen={onOpen}
+              onArchive={onArchive}
             />
           ))}
         </SortableContext>
 
         {cards.length === 0 && (
-          <div className="grid h-20 place-items-center rounded-lg border-2 border-dashed border-line text-xs font-bold text-muted">
-            Arraste vagas para cá
+          <div className="grid h-20 place-items-center rounded-lg border-2 border-dashed border-line px-3 text-center text-xs font-bold text-muted">
+            {hiddenByFilters
+              ? "Nenhuma vaga com a busca/filtros atuais"
+              : "Arraste vagas para cá"}
           </div>
         )}
       </div>

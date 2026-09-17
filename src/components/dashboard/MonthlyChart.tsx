@@ -5,13 +5,12 @@ import {
   BarChart,
   CartesianGrid,
   LabelList,
-  Legend,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
-import { SECTION_COLORS } from "@/lib/domain";
+import { CHART_SERIES_COLOR } from "@/lib/domain";
 import type { MonthPoint } from "@/lib/metrics";
 
 const AXIS_TICK = { fill: "#8a92b2", fontSize: 11, fontWeight: 700 };
@@ -20,11 +19,12 @@ const AXIS_TICK = { fill: "#8a92b2", fontSize: 11, fontWeight: 700 };
 const labelFormatter = (value: unknown) =>
   typeof value === "number" && value > 0 ? String(value) : "";
 
+/** Aplicações por mês — série única (o recorte geográfico fica na tabela por país). */
 export function MonthlyChart({ data }: { data: MonthPoint[] }) {
   return (
     <div className="h-56 w-full 2xl:h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 16, right: 8, left: -22, bottom: 0 }} barGap={2}>
+        <BarChart data={data} margin={{ top: 16, right: 8, left: -22, bottom: 0 }}>
           <CartesianGrid vertical={false} stroke="#e6eaf7" />
           <XAxis
             dataKey="label"
@@ -49,38 +49,15 @@ export function MonthlyChart({ data }: { data: MonthPoint[] }) {
               color: "#3d4468",
             }}
           />
-          <Legend
-            iconType="circle"
-            iconSize={9}
-            formatter={(value: string) => (
-              <span style={{ color: "#5a6284", fontSize: 12, fontWeight: 700 }}>
-                {value}
-              </span>
-            )}
-          />
           <Bar
-            dataKey="nacional"
-            name="Nacional"
-            fill={SECTION_COLORS.NACIONAL}
+            dataKey="total"
+            name="Aplicações"
+            fill={CHART_SERIES_COLOR}
             radius={[4, 4, 0, 0]}
-            maxBarSize={26}
+            maxBarSize={32}
           >
             <LabelList
-              dataKey="nacional"
-              position="top"
-              formatter={labelFormatter}
-              style={{ fill: "#5a6284", fontSize: 10, fontWeight: 800 }}
-            />
-          </Bar>
-          <Bar
-            dataKey="internacional"
-            name="Internacional"
-            fill={SECTION_COLORS.INTERNACIONAL}
-            radius={[4, 4, 0, 0]}
-            maxBarSize={26}
-          >
-            <LabelList
-              dataKey="internacional"
+              dataKey="total"
               position="top"
               formatter={labelFormatter}
               style={{ fill: "#5a6284", fontSize: 10, fontWeight: 800 }}

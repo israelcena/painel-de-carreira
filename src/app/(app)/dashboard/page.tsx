@@ -8,17 +8,14 @@ import {
   Users,
 } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { BarList } from "@/components/dashboard/BarList";
 import { MonthlyChart } from "@/components/dashboard/MonthlyChart";
 import { WeeklyGoalCard } from "@/components/dashboard/WeeklyGoalCard";
 import { Flag } from "@/components/ui/Flag";
 import { countryName } from "@/lib/countries";
-import { SECTION_COLORS, SECTION_LABELS } from "@/lib/domain";
 import { describeEvent, EVENT_COLORS } from "@/lib/events";
 import { formatDate, formatDateTime, relativeTime } from "@/lib/format";
 import { getDashboardData } from "@/lib/metrics";
-import type { Section } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Dashboard" };
@@ -81,51 +78,15 @@ function KpiTile({
   );
 }
 
-const FILTERS: { value: Section | ""; label: string }[] = [
-  { value: "", label: "Tudo" },
-  { value: "NACIONAL", label: "Nacional" },
-  { value: "INTERNACIONAL", label: "Internacional" },
-];
-
-export default async function DashboardPage({
-  searchParams,
-}: PageProps<"/dashboard">) {
-  const params = await searchParams;
-  const secaoParam =
-    typeof params.secao === "string" ? params.secao.toUpperCase() : "";
-  const filter: Section | undefined =
-    secaoParam === "NACIONAL" || secaoParam === "INTERNACIONAL"
-      ? (secaoParam as Section)
-      : undefined;
-
-  const data = await getDashboardData(filter);
+export default async function DashboardPage() {
+  const data = await getDashboardData();
   const { kpis } = data;
 
   return (
     <div className="mx-auto max-w-[1800px] space-y-4 px-3 py-4 md:space-y-5 md:px-6 md:py-6">
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-lg font-extrabold tracking-tight text-ink md:text-xl">
-          Dashboard
-        </h1>
-        <nav className="flex rounded-full bg-white/70 p-1 shadow-card">
-          {FILTERS.map((f) => {
-            const active = (filter ?? "") === f.value;
-            return (
-              <Link
-                key={f.label}
-                href={f.value ? `/dashboard?secao=${f.value.toLowerCase()}` : "/dashboard"}
-                className={`rounded-full px-3 py-1.5 text-xs font-extrabold transition md:px-4 md:text-sm ${
-                  active
-                    ? "bg-gradient-to-r from-brand-violet to-brand-blue text-white shadow-card"
-                    : "text-ink-soft hover:text-ink"
-                }`}
-              >
-                {f.label}
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
+      <h1 className="text-lg font-extrabold tracking-tight text-ink md:text-xl">
+        Dashboard
+      </h1>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         <KpiTile icon="total" value={String(kpis.total)} label="Aplicações" accent="#6a5cd8" />
@@ -244,43 +205,10 @@ export default async function DashboardPage({
           </p>
         </Card>
 
-        {!filter && (
-          <Card title="Nacional × Internacional">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-[11px] font-bold uppercase tracking-wide text-muted">
-                  <th className="pb-2">Seção</th>
-                  <th className="pb-2 text-right">Total</th>
-                  <th className="pb-2 text-right">Entrevistas</th>
-                  <th className="pb-2 text-right">Ofertas</th>
-                  <th className="pb-2 text-right">Rejeições</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.porSecao.map((row) => (
-                  <tr key={row.section} className="border-t border-line">
-                    <td className="flex items-center gap-2 py-2.5 font-extrabold text-ink">
-                      <span
-                        className="size-2.5 rounded-full"
-                        style={{ backgroundColor: SECTION_COLORS[row.section] }}
-                      />
-                      {SECTION_LABELS[row.section]}
-                    </td>
-                    <td className="py-2.5 text-right font-bold text-ink-soft">{row.total}</td>
-                    <td className="py-2.5 text-right font-bold text-ink-soft">{row.entrevistas}</td>
-                    <td className="py-2.5 text-right font-bold text-ink-soft">{row.ofertas}</td>
-                    <td className="py-2.5 text-right font-bold text-ink-soft">{row.rejeitadas}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Card>
-        )}
-
-        <Card title="Por país (internacional)">
+        <Card title="Por país">
           {data.porPais.length === 0 ? (
             <p className="py-8 text-center text-sm font-semibold text-muted">
-              Nenhuma vaga internacional ainda.
+              Nenhuma vaga ainda.
             </p>
           ) : (
             <div className="overflow-x-auto">
