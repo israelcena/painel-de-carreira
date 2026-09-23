@@ -82,7 +82,7 @@ const ENTER_STAGE_EVENTS = new Set([
 ]);
 
 export async function getDashboardData(): Promise<DashboardData> {
-  const [stagesRaw, apps, events, goalSetting] = await Promise.all([
+  const [stagesRaw, allApps, events, goalSetting] = await Promise.all([
     prisma.stage.findMany({ orderBy: { order: "asc" } }),
     prisma.application.findMany(),
     prisma.applicationEvent.findMany({
@@ -105,6 +105,10 @@ export async function getDashboardData(): Promise<DashboardData> {
   const rejectionStage = stages.find((s) => s.isRejection);
   const stageById = new Map(stages.map((s) => [s.id, s]));
 
+  // Arquivada sai dos KPIs, da meta e das próximas ações; o histórico
+  // (funil, motivos, por mês, tempo por etapa) continua contando.
+  const apps = allApps.filter((a) => !a.archivedAt);
+
   // Eventos por aplicação (cronológicos)
   const eventsByApp = new Map<string, typeof events>();
   for (const event of events) {
@@ -113,9 +117,30 @@ export async function getDashboardData(): Promise<DashboardData> {
     eventsByApp.set(event.applicationId, list);
   }
 
-  // Maior etapa (não-rejeição) alcançada por aplicação — via histórico
+  // Maior etapa (não-rejeição) alcançada por aplicação
   const maxReached = new Map<string, number>();
   const rejectedWithReply = new Set<string>();
+  const bumpReached = (id: string, order: number) => {
+    if (order > (maxReached.get(id) ?? 0)) maxReached.set(id, order);
+  };
+
+  // Piso pelo estado atual: a etapa em que o card está hoje já foi
+  // alcançada, mesmo sem evento no histórico (vagas inseridas direto no
+  // banco não têm CREATED).
+  for (const app of allApps) {
+    const current = stageById.get(app.stageId);
+    if (current && !current.isRejection) bumpReached(app.id, current.order);
+    const rejectedFrom = app.rejectedFromStageId
+      ? stageById.get(app.rejectedFromStageId)
+      : null;
+    if (rejectedFrom && !rejectedFrom.isRejection)
+      bumpReached(app.id, rejectedFrom.order);
+    if (app.rejectionReason && app.rejectionReason !== "SEM_RETORNO") {
+      rejectedWithReply.add(app.id);
+    }
+  }
+
+  // Refina com o histórico de eventos
   for (const event of events) {
     if (!ENTER_STAGE_EVENTS.has(event.type) || !event.toStageId) continue;
     const stage = stageById.get(event.toStageId);
@@ -127,8 +152,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       }
       continue;
     }
-    const current = maxReached.get(event.applicationId) ?? 0;
-    if (stage.order > current) maxReached.set(event.applicationId, stage.order);
+    bumpReached(event.applicationId, stage.order);
   }
 
   const nonRejectionStages = stages.filter((s) => !s.isRejection);
@@ -145,9 +169,7 @@ export async function getDashboardData(): Promise<DashboardData> {
   const rejeitadas = rejectionStage
     ? apps.filter((a) => a.stageId === rejectionStage.id).length
     : 0;
-  const ativas = apps.filter(
-    (a) => !a.archivedAt && a.stageId !== rejectionStage?.id
-  ).length;
+  const ativas = apps.filter((a) => a.stageId !== rejectionStage?.id).length;
   const entrevistas = apps.filter(
     (a) => (maxReached.get(a.id) ?? 0) >= entrevistaOrder
   ).length;
@@ -178,7 +200,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     months.push(point);
     monthIndex.set(key, point);
   }
-  for (const app of apps) {
+  for (const app of allApps) {
     const date = app.appliedAt ?? app.createdAt;
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
     const point = monthIndex.get(key);
@@ -190,13 +212,13 @@ export async function getDashboardData(): Promise<DashboardData> {
     stageId: stage.id,
     name: stage.name,
     color: stage.color,
-    count: apps.filter((a) => (maxReached.get(a.id) ?? 0) >= stage.order)
+    count: allApps.filter((a) => (maxReached.get(a.id) ?? 0) >= stage.order)
       .length,
   }));
 
   // ── Motivos de rejeição (estado atual das vagas) ────────────────────
   const reasonCounts = new Map<RejectionReason, number>();
-  for (const app of apps) {
+  for (const app of allApps) {
     if (!app.rejectionReason) continue;
     const reason = app.rejectionReason as RejectionReason;
     reasonCounts.set(reason, (reasonCounts.get(reason) ?? 0) + 1);
@@ -211,7 +233,7 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   // ── Tempo médio por etapa (dias) — intervalos entre eventos ────────
   const stageDurations = new Map<string, { totalDays: number; samples: number }>();
-  for (const app of apps) {
+  for (const app of allApps) {
     const appEvents = (eventsByApp.get(app.id) ?? []).filter(
       (e) => ENTER_STAGE_EVENTS.has(e.type) && e.toStageId
     );
@@ -257,8 +279,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       rejeitadas: 0,
     };
     point.total += 1;
-    if (!app.archivedAt && app.stageId !== rejectionStage?.id)
-      point.ativas += 1;
+    if (app.stageId !== rejectionStage?.id) point.ativas += 1;
     if ((maxReached.get(app.id) ?? 0) >= ofertaOrder) point.ofertas += 1;
     if (app.stageId === rejectionStage?.id) point.rejeitadas += 1;
     countryMap.set(app.countryCode, point);
@@ -288,12 +309,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     today.getDate()
   );
   const proximasAcoes: NextActionItem[] = apps
-    .filter(
-      (app) =>
-        app.nextActionAt &&
-        !app.archivedAt &&
-        app.stageId !== rejectionStage?.id
-    )
+    .filter((app) => app.nextActionAt && app.stageId !== rejectionStage?.id)
     .map((app) => ({
       id: app.id,
       company: app.company,
