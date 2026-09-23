@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Worktrees do Claude Code são checkouts de outras branches: lintá-los
+    // aqui duplica (e mistura) os problemas do código desta branch.
+    ".claude/worktrees/**",
   ]),
 ]);
 
