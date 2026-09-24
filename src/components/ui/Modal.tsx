@@ -4,6 +4,12 @@ import { X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
+const SIZE_CLASSES = {
+  md: "md:max-w-lg",
+  lg: "md:max-w-2xl xl:max-w-3xl 2xl:max-w-4xl",
+  xl: "md:max-w-2xl lg:max-w-4xl xl:max-w-[min(75vw,112rem)]",
+} as const;
+
 export function Modal({
   open,
   onClose,
@@ -11,7 +17,7 @@ export function Modal({
   subtitle,
   actions,
   children,
-  wide = false,
+  size = "md",
 }: {
   open: boolean;
   onClose: () => void;
@@ -20,7 +26,8 @@ export function Modal({
   /** Botões extras no cabeçalho, à esquerda do fechar. */
   actions?: React.ReactNode;
   children: React.ReactNode;
-  wide?: boolean;
+  /** md: diálogos curtos; lg: formulários e prévias; xl: acompanha a tela (visão da vaga). */
+  size?: "md" | "lg" | "xl";
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -65,9 +72,7 @@ export function Modal({
       />
       <div
         ref={panelRef}
-        className={`nice-scroll relative z-10 max-h-[94dvh] w-full overflow-y-auto rounded-t-2xl bg-white shadow-float md:rounded-2xl ${
-          wide ? "md:max-w-2xl xl:max-w-3xl 2xl:max-w-4xl" : "md:max-w-lg"
-        }`}
+        className={`nice-scroll relative z-10 max-h-[94dvh] w-full overflow-y-auto rounded-t-2xl bg-white shadow-float md:rounded-2xl ${SIZE_CLASSES[size]}`}
       >
         <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-line bg-white px-5 py-4">
           <div className="min-w-0">
