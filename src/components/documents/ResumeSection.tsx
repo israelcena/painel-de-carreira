@@ -142,12 +142,14 @@ export function ResumeSection({ documents }: { documents: DocumentDTO[] }) {
           Nenhum currículo enviado ainda.
         </p>
       ) : (
-        // Duas colunas no xl; em telas gigantes o número de colunas acompanha a largura
-        <ul className="divide-y divide-line xl:grid xl:grid-cols-2 xl:gap-x-8 3xl:grid-cols-[repeat(auto-fill,minmax(30rem,1fr))]">
+        // Duas colunas no xl; em telas gigantes o número de colunas acompanha a largura.
+        // Em colunas, cada item tem borda inferior; o -mb-px + overflow-y-clip
+        // corta a da última linha (o divide-y só a omitia na lista simples).
+        <ul className="divide-y divide-line xl:grid xl:grid-cols-2 xl:gap-x-8 xl:overflow-y-clip 3xl:grid-cols-[repeat(auto-fill,minmax(30rem,1fr))]">
           {documents.map((doc) => (
             <li
               key={doc.id}
-              className="flex items-center gap-3 py-2.5 xl:border-b xl:border-line"
+              className="flex items-center gap-3 py-2.5 xl:-mb-px xl:border-b xl:border-line"
             >
               <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand/10 text-brand">
                 <FileText size={17} strokeWidth={2.2} />

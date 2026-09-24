@@ -264,7 +264,8 @@ export default async function DashboardPage() {
               Nenhuma atividade ainda — crie sua primeira vaga no quadro.
             </p>
           ) : (
-            <ul className="divide-y divide-line 3xl:grid 3xl:grid-cols-[repeat(auto-fill,minmax(36rem,1fr))] 3xl:gap-x-8">
+            // Em colunas (3xl) a borda da última linha é cortada, como na lista de currículos
+            <ul className="divide-y divide-line 3xl:grid 3xl:grid-cols-[repeat(auto-fill,minmax(36rem,1fr))] 3xl:gap-x-8 3xl:overflow-y-clip">
               {data.atividadeRecente.map((event) => {
                 const stageNameById = Object.fromEntries(
                   data.stages.map((s) => [s.id, s.name])
@@ -272,7 +273,7 @@ export default async function DashboardPage() {
                 return (
                   <li
                     key={event.id}
-                    className="flex items-start gap-3 py-2.5 3xl:border-b 3xl:border-line"
+                    className="flex items-start gap-3 py-2.5 3xl:-mb-px 3xl:border-b 3xl:border-line"
                   >
                     <span
                       className="mt-1.5 size-2.5 shrink-0 rounded-full"
