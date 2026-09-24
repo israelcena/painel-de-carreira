@@ -67,6 +67,10 @@ export function WeeklyGoalCard({
       <p className="mt-1 text-[11px] font-bold text-muted">
         {pct}% · semana atual (segunda a domingo)
       </p>
+      <p className="mt-0.5 text-[11px] font-semibold text-muted">
+        Vagas de Aplicado em diante, pela data de aplicação (sem ela, pela
+        entrada em Aplicado). Interesse não conta.
+      </p>
 
       <form
         onSubmit={(e) => {

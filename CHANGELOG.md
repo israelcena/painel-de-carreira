@@ -96,6 +96,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
   Aplicado ou posterior (antes vinha preenchida também em Interesse, gravando uma data de aplicação
   em vaga que ainda não foi aplicada). Enquanto a data não for editada à mão, ela acompanha a troca
   de etapa no formulário. Vale só para vagas novas.
+- **Interesse fora da meta da semana e de "Aplicações por mês".** Com a data de aplicação vazia,
+  os dois indicadores usavam a data de cadastro, então a vaga nova em Interesse continuava contando
+  mesmo sem a data pré-preenchida. Agora só conta a vaga que chegou a Aplicado ou além (a mesma
+  régua do funil), inclusive as antigas sem data de aplicação e as rejeitadas depois de aplicar. A
+  data usada é a de aplicação do card; vazia, vale o dia em que a vaga entrou em Aplicado pelo
+  histórico (caso de quem arrasta o card de Interesse para Aplicado) e, sem esse registro, a de
+  cadastro. Interesses antigos que ficaram com a data pré-preenchida também saem da conta enquanto
+  estiverem em Interesse. Os rodapés dos dois cards explicam a regra.
 - A lista de currículos em duas colunas (1280px+) e a "Atividade recente" em colunas (1920px+) não
   deixam mais uma linha divisória sobrando sob a última linha — visível sobretudo com um currículo
   só.
