@@ -32,6 +32,13 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
   direto na aba certa. **Salvar alterações** volta para a visão já atualizada (antes fechava o
   modal), e **Voltar** sai da edição sem salvar. Arquivar, excluir e mover de etapa continuam
   fechando o modal.
+- **Avançar de fase e Arquivar no cabeçalho da visão da vaga**, ao lado do Editar. **Avançar de
+  fase** move a vaga para a próxima etapa do funil (topo da raia) e mostra o nome da etapa no
+  tooltip; some na última etapa (Oferta) e em Rejeitado, que volta pelo "Retornar ao funil".
+  **Arquivar** usa a mesma confirmação do ícone do card: o modal some enquanto ela está aberta e
+  volta se você cancelar. No celular os dois viram só ícone, para não espremer o título. Ao mover
+  pelo modal (avançar, "Mover para etapa" ou "Retornar ao funil"), um aviso diz para qual etapa a
+  vaga foi.
 - **Currículo em cada vaga.** Nova aba **Currículo** no modal da vaga: vincule uma versão já salva
   em Documentos ou envie um arquivo novo (ex.: CV adaptado para a vaga), que entra na biblioteca e
   já fica vinculado. Um currículo por vaga; trocar substitui o vínculo e "Remover vínculo" mantém o
