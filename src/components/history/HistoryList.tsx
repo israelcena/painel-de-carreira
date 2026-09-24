@@ -126,7 +126,8 @@ export function HistoryList({
           </p>
         </div>
       ) : (
-        <ul className="space-y-2">
+        // No 3xl (telas gigantes) os eventos viram cartões em colunas adaptativas
+        <ul className="space-y-2 3xl:grid 3xl:grid-cols-[repeat(auto-fill,minmax(34rem,1fr))] 3xl:gap-2 3xl:space-y-0">
           {filtered.map((event) => (
             <li
               key={event.id}
@@ -138,8 +139,9 @@ export function HistoryList({
                   backgroundColor: EVENT_COLORS[event.type] ?? "#8a92b2",
                 }}
               />
-              {/* Em telas largas cada evento vira uma linha: vaga · evento · data */}
-              <div className="min-w-0 flex-1 xl:grid xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)_20rem] xl:items-baseline xl:gap-x-6">
+              {/* No xl cada evento vira uma linha (vaga · evento · data); no 3xl
+                  volta ao cartão empilhado, já que as colunas são da lista */}
+              <div className="min-w-0 flex-1 xl:grid xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)_20rem] xl:items-baseline xl:gap-x-6 3xl:block">
                 <p className="text-sm font-extrabold leading-snug wrap-break-word text-ink">
                   {event.application.company}
                   <span className="font-semibold text-ink-soft">
@@ -157,7 +159,7 @@ export function HistoryList({
                   {describeEvent(event, stageNameById)}
                 </p>
                 <p
-                  className="mt-0.5 text-[11px] font-bold text-muted xl:mt-0 xl:text-right"
+                  className="mt-0.5 text-[11px] font-bold text-muted xl:mt-0 xl:text-right 3xl:mt-0.5 3xl:text-left"
                   title={formatDateTime(event.createdAt)}
                 >
                   {/* No xl só quebra nos separadores, nunca no meio do nome do país */}
@@ -175,12 +177,15 @@ export function HistoryList({
                 </p>
               </div>
               {canUnarchive(event) ? (
-                <div className="flex shrink-0 justify-end xl:w-28">
+                <div className="flex shrink-0 justify-end xl:w-28 3xl:w-auto">
                   <UnarchiveButton id={event.application.id} />
                 </div>
               ) : (
                 reserveButtonSlot && (
-                  <span aria-hidden className="hidden shrink-0 xl:block xl:w-28" />
+                  <span
+                    aria-hidden
+                    className="hidden shrink-0 xl:block xl:w-28 3xl:hidden"
+                  />
                 )
               )}
             </li>

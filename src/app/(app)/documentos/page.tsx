@@ -15,7 +15,7 @@ export default async function DocumentosPage() {
   ]);
 
   return (
-    <div className="mx-auto max-w-[1800px] space-y-6 px-3 py-4 md:px-6 md:py-6">
+    <div className="mx-auto max-w-[1800px] space-y-6 px-3 py-4 md:px-6 md:py-6 3xl:max-w-none">
       <div>
         <h1 className="text-lg font-extrabold tracking-tight text-ink md:text-xl">
           Documentos
@@ -26,12 +26,8 @@ export default async function DocumentosPage() {
         </p>
       </div>
 
-      {/* Em telas gigantes, currículos e rascunhos ficam lado a lado; os
-          rascunhos (texto longo, dois por linha) levam a coluna mais larga */}
-      <div className="grid grid-cols-1 items-start gap-6 3xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        <ResumeSection documents={documents} />
-        <DraftsSection drafts={textDocs as TextDocDTO[]} />
-      </div>
+      <ResumeSection documents={documents} />
+      <DraftsSection drafts={textDocs as TextDocDTO[]} />
     </div>
   );
 }

@@ -182,7 +182,7 @@ export function SwotGrid({
 
   return (
     <div
-      className={`grid grid-cols-1 gap-3 ${compact ? "sm:grid-cols-2" : "md:grid-cols-2 md:gap-4"}`}
+      className={`grid grid-cols-1 gap-3 ${compact ? "sm:grid-cols-2" : "md:grid-cols-2 md:gap-4 3xl:grid-cols-4"}`}
     >
       {SWOT_ORDER.map((quadrant) => (
         <Quadrant
