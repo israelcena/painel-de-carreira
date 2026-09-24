@@ -83,7 +83,7 @@ export default async function DashboardPage() {
   const { kpis } = data;
 
   return (
-    <div className="mx-auto max-w-[1800px] space-y-4 px-3 py-4 md:space-y-5 md:px-6 md:py-6">
+    <div className="mx-auto max-w-[1800px] space-y-4 px-3 py-4 md:space-y-5 md:px-6 md:py-6 3xl:max-w-none">
       <h1 className="text-lg font-extrabold tracking-tight text-ink md:text-xl">
         Dashboard
       </h1>
@@ -107,7 +107,8 @@ export default async function DashboardPage() {
         apenas vagas não arquivadas.
       </p>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+      {/* Em telas gigantes o número de colunas acompanha a largura */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-[repeat(auto-fill,minmax(30rem,1fr))]">
         <WeeklyGoalCard
           goal={data.metaSemana.goal}
           count={data.metaSemana.count}
@@ -254,19 +255,25 @@ export default async function DashboardPage() {
           )}
         </Card>
 
-        <Card title="Atividade recente" className="lg:col-span-2 2xl:col-span-3">
+        <Card
+          title="Atividade recente"
+          className="lg:col-span-2 2xl:col-span-3 3xl:col-span-full"
+        >
           {data.atividadeRecente.length === 0 ? (
             <p className="py-8 text-center text-sm font-semibold text-muted">
               Nenhuma atividade ainda — crie sua primeira vaga no quadro.
             </p>
           ) : (
-            <ul className="divide-y divide-line">
+            <ul className="divide-y divide-line 3xl:grid 3xl:grid-cols-[repeat(auto-fill,minmax(36rem,1fr))] 3xl:gap-x-8">
               {data.atividadeRecente.map((event) => {
                 const stageNameById = Object.fromEntries(
                   data.stages.map((s) => [s.id, s.name])
                 );
                 return (
-                  <li key={event.id} className="flex items-start gap-3 py-2.5">
+                  <li
+                    key={event.id}
+                    className="flex items-start gap-3 py-2.5 3xl:border-b 3xl:border-line"
+                  >
                     <span
                       className="mt-1.5 size-2.5 shrink-0 rounded-full"
                       style={{ backgroundColor: EVENT_COLORS[event.type] ?? "#8a92b2" }}

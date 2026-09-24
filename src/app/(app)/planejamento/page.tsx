@@ -13,7 +13,7 @@ export default async function PlanejamentoPage() {
   });
 
   return (
-    <div className="mx-auto max-w-[1800px] px-3 py-4 md:px-6 md:py-6">
+    <div className="mx-auto max-w-[1800px] px-3 py-4 md:px-6 md:py-6 3xl:max-w-none">
       <div className="mb-4 md:mb-5">
         <h1 className="text-lg font-extrabold tracking-tight text-ink md:text-xl">
           Planejamento de carreira

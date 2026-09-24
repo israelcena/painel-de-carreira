@@ -43,7 +43,7 @@ export default async function HistoricoPage() {
   }));
 
   return (
-    <div className="mx-auto max-w-[1800px] px-3 py-4 md:px-6 md:py-6">
+    <div className="mx-auto max-w-[1800px] px-3 py-4 md:px-6 md:py-6 3xl:max-w-none">
       <HistoryList events={rows} stages={stages as StageDTO[]} />
     </div>
   );

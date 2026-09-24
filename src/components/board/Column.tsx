@@ -51,7 +51,7 @@ export function Column({
 
   return (
     <section
-      className="flex max-h-full w-[85vw] shrink-0 snap-center flex-col overflow-hidden rounded-xl bg-panel/85 shadow-card sm:w-[62vw] md:w-72 md:snap-align-none 2xl:w-auto 2xl:min-w-60 2xl:max-w-96 2xl:flex-1"
+      className="flex max-h-full w-[85vw] shrink-0 snap-center flex-col overflow-hidden rounded-xl bg-panel/85 shadow-card sm:w-[62vw] md:w-72 md:snap-align-none 2xl:w-auto 2xl:min-w-60 2xl:max-w-96 2xl:flex-1 3xl:max-w-none"
       style={{ borderTop: `4px solid ${stage.color}` }}
     >
       <header className="flex items-center justify-between gap-2 px-3 pb-2 pt-2.5">
