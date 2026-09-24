@@ -23,9 +23,12 @@ import { PriorityPill } from "@/components/ui/PriorityPill";
 export function CardBody({
   app,
   isRejectionColumn,
+  onViewResume,
 }: {
   app: AppCard;
   isRejectionColumn: boolean;
+  /** Sem ele (ex.: prévia do arraste) o ícone do currículo é só indicador. */
+  onViewResume?: () => void;
 }) {
   return (
     <>
@@ -98,44 +101,50 @@ export function CardBody({
             <FileText size={11} strokeWidth={2.5} />
           </span>
         )}
-        <span
-          title="Dias na etapa atual"
-          className="flex items-center gap-1 text-[11px] font-bold"
-        >
-          <Clock size={11} strokeWidth={2.5} />
-          {daysSince(app.stageEnteredAt)}d
-        </span>
-        {(app.resume || app.jobUrl) && (
-          // Links param a propagação para não abrir o modal nem iniciar arraste
-          <div className="ml-auto flex shrink-0 items-center gap-1">
-            {app.resume && (
-              <a
-                href={`/api/documentos/${app.resume.id}`}
-                download={app.resume.fileName}
-                onClick={(e) => e.stopPropagation()}
+        {/* Currículo e dias num bloco só: quebram de linha juntos */}
+        <span className="flex items-center gap-2.5">
+          {app.resume &&
+            (onViewResume ? (
+              // Para a propagação para não abrir o modal da vaga nem iniciar arraste
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewResume();
+                }}
                 onPointerDown={(e) => e.stopPropagation()}
                 onPointerUp={(e) => e.stopPropagation()}
-                title={`Baixar currículo: ${app.resume.name}`}
-                className="rounded-md p-1 transition hover:bg-panel hover:text-brand"
+                aria-label={`Ver currículo: ${app.resume.name}`}
+                title={`Ver currículo: ${app.resume.name}`}
+                className="-m-1 rounded-md p-1 transition hover:bg-panel hover:text-brand"
               >
                 <FileUser size={13} strokeWidth={2.5} />
-              </a>
-            )}
-            {app.jobUrl && (
-              <a
-                href={app.jobUrl}
-                target="_blank"
-                rel="noreferrer noopener"
-                onClick={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-                onPointerUp={(e) => e.stopPropagation()}
-                title="Abrir vaga"
-                className="rounded-md p-1 transition hover:bg-panel hover:text-brand"
-              >
-                <ExternalLink size={13} strokeWidth={2.5} />
-              </a>
-            )}
-          </div>
+              </button>
+            ) : (
+              <FileUser size={13} strokeWidth={2.5} />
+            ))}
+          <span
+            title="Dias na etapa atual"
+            className="flex items-center gap-1 text-[11px] font-bold"
+          >
+            <Clock size={11} strokeWidth={2.5} />
+            {daysSince(app.stageEnteredAt)}d
+          </span>
+        </span>
+        {app.jobUrl && (
+          // Para a propagação para não abrir o modal nem iniciar arraste
+          <a
+            href={app.jobUrl}
+            target="_blank"
+            rel="noreferrer noopener"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            onPointerUp={(e) => e.stopPropagation()}
+            title="Abrir vaga"
+            className="ml-auto shrink-0 rounded-md p-1 transition hover:bg-panel hover:text-brand"
+          >
+            <ExternalLink size={13} strokeWidth={2.5} />
+          </a>
         )}
       </div>
     </>
@@ -148,12 +157,14 @@ export function ApplicationCard({
   disabled,
   onOpen,
   onArchive,
+  onViewResume,
 }: {
   app: AppCard;
   isRejectionColumn: boolean;
   disabled: boolean;
   onOpen: (app: AppCard) => void;
   onArchive: (app: AppCard) => void;
+  onViewResume: (app: AppCard) => void;
 }) {
   const {
     attributes,
@@ -193,7 +204,11 @@ export function ApplicationCard({
         isDragging ? "opacity-40" : ""
       }`}
     >
-      <CardBody app={app} isRejectionColumn={isRejectionColumn} />
+      <CardBody
+        app={app}
+        isRejectionColumn={isRejectionColumn}
+        onViewResume={() => onViewResume(app)}
+      />
       {/* Arquivar rápido: para a propagação para não abrir o modal nem iniciar arraste */}
       <button
         type="button"
