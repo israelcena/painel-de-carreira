@@ -74,6 +74,27 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ### Corrigido
 
+- **Dashboard contava vagas arquivadas nos indicadores.** A consulta base nunca filtrava o
+  arquivamento, e só "Ativas", as próximas ações e a coluna de ativas em "Por país" o respeitavam.
+  Agora os KPIs (aplicações, ativas, entrevistas, ofertas, rejeições, taxa de resposta), a meta da
+  semana, as próximas ações e a tabela "Por país" consideram só vagas não arquivadas, e uma nota
+  abaixo dos KPIs avisa isso. Os cards históricos — aplicações por mês, funil de conversão, motivos
+  de rejeição e tempo médio por etapa — continuam incluindo as arquivadas e dizem isso no rodapé; a
+  atividade recente também segue mostrando eventos de vagas arquivadas. O botão **Arquivar** e a
+  confirmação de exclusão agora dizem que a vaga sai do quadro "sem perder o histórico", em vez de
+  prometer que ela "mantém as métricas".
+- **Funil e indicadores zerados em vagas sem histórico.** A etapa alcançada por cada vaga vinha só
+  dos eventos, e vagas inseridas direto no banco (sem evento de criação) apareciam apenas em
+  Interesse, zerando Entrevistas, Ofertas e Taxa de resposta. Agora a etapa atual do card conta como
+  alcançada, assim como, para as rejeitadas, a etapa de onde saíram; e um motivo de rejeição
+  diferente de "Sem retorno" já conta como resposta, mesmo sem o evento de rejeição.
+- **Data de aplicação ao criar uma vaga** só vem preenchida com hoje quando a etapa escolhida é
+  Aplicado ou posterior (antes vinha preenchida também em Interesse, gravando uma data de aplicação
+  em vaga que ainda não foi aplicada). Enquanto a data não for editada à mão, ela acompanha a troca
+  de etapa no formulário. Vale só para vagas novas.
+- A lista de currículos em duas colunas (1280px+) e a "Atividade recente" em colunas (1920px+) não
+  deixam mais uma linha divisória sobrando sob a última linha — visível sobretudo com um currículo
+  só.
 - **Dashboard no mobile:** tocar em Dashboard deixava a página mais larga que a tela, o navegador
   afastava o zoom e o menu de baixo esticava junto. A grade de cards não tinha colunas definidas
   abaixo de 1024px, e textos de uma linha (empresa/cargo, notas) alargavam a coluna. Mesma correção
@@ -102,6 +123,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 - Mensagem de raia vazia por filtro não atribui mais a causa ao filtro da raia quando o filtro
   geral ou a busca é o responsável.
 
+### Desenvolvimento
+
+- `bun run lint` ignora `.claude/worktrees/**`. Os worktrees do Claude Code são checkouts de outras
+  branches, e o lint os percorria junto, reportando milhares de problemas que não vinham do código
+  da branch atual.
+
 ### Migração de banco
 
 Três migrations, aplicadas em sequência pelo `prisma migrate deploy` do build (Vercel) e da
@@ -126,3 +153,55 @@ intervalo o deploy antigo ainda consulta a coluna `section` e retorna erro. Faç
 momento tranquilo. Se os deploys de preview compartilharem o banco de produção (sem preview
 branching no Neon), um build de preview também aplicaria a migration — confirme a configuração da
 integração antes de abrir PRs.
+
+## 2026-08-30
+
+Registrado depois, a partir do histórico do git: este arquivo só começou em 2026-09-15.
+
+### Alterado
+
+- **bun no lugar do npm.** `bun.lock` substitui o `package-lock.json`, e o Dockerfile instala as
+  dependências com `bun install --frozen-lockfile` (e o Prisma do estágio de migração com `bun add`).
+  O build da imagem continua em `npm run build`.
+- **Arraste pela alça.** Cada card ganhou uma alça (⋮⋮) na lateral direita, e o arraste começa só
+  por ela; tocar ou clicar no resto do card abre a vaga. Um movimento de mais de 8px entre apertar e
+  soltar conta como rolagem, e não abre nada. No celular, continua sendo preciso segurar ~0,2s
+  (agora na alça) para arrastar.
+
+### Adicionado
+
+- Botão de **mostrar/ocultar senha** (ícone de olho) no login.
+- `allowedDevOrigins` para `*.trycloudflare.com` e `*.cloudflared.com` no `next.config.ts`: o
+  `next dev` aberto por um Cloudflare Tunnel carrega os recursos de desenvolvimento (chunks, fontes,
+  HMR) e hidrata, em vez de ficar sem responder a toques no celular.
+
+## 2026-08-10 — primeira versão
+
+Registrado depois, a partir do histórico do git.
+
+### Adicionado
+
+- **Painel de carreira**: kanban com as 7 etapas, então dividido em quadros Nacional e
+  Internacional, com arrastar e soltar, pills de prioridade e bandeira nas vagas internacionais.
+  Rejeição com motivo, data e etapa de origem; histórico detalhado por eventos; dashboard com KPIs,
+  aplicações por mês, funil, motivos de rejeição, tempo por etapa e comparativos por seção e por
+  país. Login simples com iron-session (`APP_USER` / `APP_PASSWORD`). Layout responsivo, do celular
+  (navegação inferior, colunas com scroll-snap) a telas ultrawide. Docker Compose (app standalone +
+  Postgres 17) com `migrate deploy` e seed idempotente na inicialização do container.
+- **SWOT, documentos e planejamento**: análise SWOT por vaga (aba no modal) e geral (página
+  Planejar); página Documentos com upload de currículos (até 8 MB, salvos no banco), download e
+  exclusão, e rascunhos de texto com um pitch inicial; descrição da vaga em aba própria, link da
+  candidatura e próxima ação com data (chip vermelho quando vence); meta semanal de aplicações com
+  progresso e edição no próprio card, e lista de próximas ações no Dashboard; itens Planejar e Docs
+  na navegação.
+- **Deploy na Vercel com Neon**: `vercel.json` com `prisma generate`, `migrate deploy` e seed no
+  build; o Prisma lê `POSTGRES_PRISMA_URL` (pooled) e `POSTGRES_URL_NON_POOLING` (direta), os nomes
+  que a integração do Neon injeta, e o compose e o `.env` local usam os mesmos nomes. Cookie de
+  sessão `secure` na Vercel (segue sem `secure` no Docker, servido em http); `output: standalone`
+  só fora da Vercel; `.vercelignore` impede subir `.env` e arquivos do Docker.
+- Nome **ProMove** ("movimento profissional") na topbar, no login e nos metadados; licença MIT.
+
+### Removido
+
+- Dica na tela de login que citava as variáveis `APP_USER` e `APP_PASSWORD`, informação
+  desnecessária numa URL pública.
