@@ -25,7 +25,9 @@ export default async function BoardPage() {
           select: { createdAt: true },
         },
         // Select explícito: nunca carregar os bytes do currículo no quadro
-        resume: { select: { id: true, name: true, fileName: true } },
+        resume: {
+          select: { id: true, name: true, fileName: true, size: true },
+        },
       },
     }),
   ]);

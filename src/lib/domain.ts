@@ -114,6 +114,24 @@ export const DOCUMENT_EXTENSIONS = [
   ".md",
 ];
 
+/**
+ * Como o visualizador do card mostra o arquivo: PDF no leitor do navegador,
+ * texto dentro do modal; `null` para formatos que o navegador não abre (DOC,
+ * DOCX, ODT, RTF), que ficam só com o download. Decide pela extensão, não pelo
+ * mimeType salvo (que vem do navegador de quem enviou).
+ */
+export type DocumentPreviewKind = "pdf" | "text";
+
+export function documentPreviewKind(
+  fileName: string
+): DocumentPreviewKind | null {
+  const dot = fileName.lastIndexOf(".");
+  const ext = dot >= 0 ? fileName.slice(dot).toLowerCase() : "";
+  if (ext === ".pdf") return "pdf";
+  if (ext === ".txt" || ext === ".md") return "text";
+  return null;
+}
+
 export const PLATFORM_SUGGESTIONS = [
   "LinkedIn",
   "Gupy",

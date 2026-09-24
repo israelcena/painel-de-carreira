@@ -73,6 +73,7 @@ export interface ResumeRef {
   id: string;
   name: string;
   fileName: string;
+  size: number;
 }
 
 export type SwotQuadrant = "FORCA" | "FRAQUEZA" | "OPORTUNIDADE" | "AMEACA";

@@ -25,6 +25,7 @@ export function Column({
   onAdd,
   onOpen,
   onArchive,
+  onViewResume,
 }: {
   stage: StageDTO;
   /** Cards visíveis (já filtrados pela busca e pelos filtros geral/da raia). */
@@ -43,6 +44,7 @@ export function Column({
   onAdd: (stageId: string) => void;
   onOpen: (app: AppCard) => void;
   onArchive: (app: AppCard) => void;
+  onViewResume: (app: AppCard) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage.id });
   const hiddenByFilters = total > 0 && cards.length === 0;
@@ -115,6 +117,7 @@ export function Column({
               disabled={dndDisabled}
               onOpen={onOpen}
               onArchive={onArchive}
+              onViewResume={onViewResume}
             />
           ))}
         </SortableContext>

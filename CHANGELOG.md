@@ -28,8 +28,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
   em Documentos ou envie um arquivo novo (ex.: CV adaptado para a vaga), que entra na biblioteca e
   já fica vinculado. Um currículo por vaga; trocar substitui o vínculo e "Remover vínculo" mantém o
   arquivo em Documentos.
-- **Download do currículo pelo card**: ícone no rodapé do card baixa o arquivo vinculado sem abrir
-  o modal nem iniciar o arraste.
+- **Currículo pelo card**: o ícone ao lado dos dias na etapa abre o currículo vinculado num
+  visualizador, sem abrir o modal da vaga nem iniciar o arraste; o botão **Baixar** fica no
+  visualizador. PDF aparece no leitor do navegador em telas com mouse ou trackpad; no celular (o
+  iPhone desenharia só a 1ª página) e em navegadores sem leitor embutido, o visualizador oferece
+  **Abrir em nova aba**. TXT e MD aparecem como texto (UTF-8, UTF-16 com BOM ou Windows-1252); DOC,
+  DOCX, ODT e RTF, que o navegador não abre, mostram só o nome e o tamanho. A rota de download aceita
+  `?inline=1` para exibir PDF e texto, com o tipo decidido pela extensão, e responde com `nosniff` e
+  `Cache-Control: private, no-store`.
 - **"Usado em" em Documentos**: cada currículo lista as vagas que o usam (arquivadas marcadas), e a
   confirmação de exclusão avisa quantas vagas ficarão sem currículo.
 - **Histórico registra o currículo**: "Currículo vinculado: …" e "Currículo desvinculado: …",

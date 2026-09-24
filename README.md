@@ -35,7 +35,7 @@ As migrations e o seed das etapas rodam automaticamente na inicialização do co
 ### Em cada vaga
 - **Detalhes**: plataforma, salário, modelo de trabalho, cidade, link do anúncio, link da candidatura, prioridade
 - **Descrição da vaga**: o texto completo de requisitos e responsabilidades
-- **Currículo**: a versão enviada para aquela vaga — escolha uma já salva em Documentos ou envie um arquivo novo; o card ganha um ícone para baixá-lo direto
+- **Currículo**: a versão enviada para aquela vaga — escolha uma já salva em Documentos ou envie um arquivo novo; um ícone no card (ao lado dos dias na etapa) abre o currículo num visualizador com botão de download
 - **SWOT da candidatura**: forças e fraquezas do seu perfil para aquela vaga, oportunidades e ameaças do processo
 - **Histórico**: timeline com tudo o que aconteceu, mais notas livres
 - **Próxima ação com data** — o card destaca em vermelho quando vence
@@ -118,7 +118,7 @@ src/
   app/(app)/historico        → log de eventos com filtros
   app/login                  → autenticação
   app/actions/               → server actions (vagas, SWOT, documentos, auth)
-  app/api/documentos/[id]    → download dos currículos
+  app/api/documentos/[id]    → download dos currículos (`?inline=1` exibe PDF e texto no navegador)
   components/                → board (Board, Column, FilterPopover), modais, swot, documents,
                                dashboard, layout, ui (Modal, ConfirmDialog, CountrySelect, Flag)
   lib/                       → prisma, sessão, métricas, domínio, países, filtros do quadro (boardFilters)

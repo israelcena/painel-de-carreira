@@ -56,6 +56,7 @@ import {
   RejectModal,
   type RejectPayload,
 } from "@/components/modals/RejectModal";
+import { ResumePreviewModal } from "@/components/modals/ResumePreviewModal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Flag } from "@/components/ui/Flag";
 import { CardBody } from "./ApplicationCard";
@@ -203,6 +204,8 @@ export function Board({
   const [createStageId, setCreateStageId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [archiveTarget, setArchiveTarget] = useState<AppCard | null>(null);
+  // Card cujo currículo está aberto no visualizador (lido de appsById)
+  const [resumeViewId, setResumeViewId] = useState<string | null>(null);
   const [globalFilter, setGlobalFilter] = useState<BoardFilter>(EMPTY_FILTER);
   const [laneFilters, setLaneFilters] = useState<Record<string, BoardFilter>>(
     {}
@@ -241,6 +244,7 @@ export function Board({
     if (archiveTarget) {
       setArchiveTarget(fresh.find((a) => a.id === archiveTarget.id) ?? null);
     }
+    if (resumeViewId && !byId[resumeViewId]?.resume) setResumeViewId(null);
   }
 
   // Dados novos do servidor substituem o estado que o snapshot descrevia
@@ -602,6 +606,7 @@ export function Board({
   };
 
   const activeApp = activeId ? appsById[activeId] : null;
+  const resumeApp = resumeViewId ? (appsById[resumeViewId] ?? null) : null;
   const totalCount = Object.keys(appsById).length;
   const visibleCount = Object.values(visibleByStage).reduce(
     (sum, cards) => sum + cards.length,
@@ -697,6 +702,7 @@ export function Board({
               }}
               onOpen={setEditing}
               onArchive={setArchiveTarget}
+              onViewResume={(app) => setResumeViewId(app.id)}
             />
           ))}
         </div>
@@ -737,6 +743,11 @@ export function Board({
         stages={stages}
         onClose={() => setEditing(null)}
         onMove={handleModalMove}
+      />
+
+      <ResumePreviewModal
+        app={resumeApp}
+        onClose={() => setResumeViewId(null)}
       />
 
       <RejectModal
