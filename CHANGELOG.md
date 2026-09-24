@@ -74,6 +74,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ### Corrigido
 
+- **Interesse fora da meta da semana e de "Aplicações por mês".** A vaga nova em Interesse já não
+  vinha com a data de aplicação preenchida, mas os dois indicadores usavam a data de cadastro
+  quando ela estava vazia, e o interesse continuava contando. Agora só conta a vaga que chegou a
+  Aplicado ou além (a mesma régua do funil), inclusive as antigas sem data de aplicação e as
+  rejeitadas depois de aplicar. A data usada é a de aplicação do card; vazia, vale o dia em que a
+  vaga entrou em Aplicado pelo histórico (caso de quem arrasta o card de Interesse para Aplicado) e,
+  sem esse registro, a de cadastro. Interesses antigos que ficaram com a data pré-preenchida também
+  saem da conta enquanto estiverem em Interesse. Os rodapés dos dois cards explicam a regra.
 - **Dashboard no mobile:** tocar em Dashboard deixava a página mais larga que a tela, o navegador
   afastava o zoom e o menu de baixo esticava junto. A grade de cards não tinha colunas definidas
   abaixo de 1024px, e textos de uma linha (empresa/cargo, notas) alargavam a coluna. Mesma correção

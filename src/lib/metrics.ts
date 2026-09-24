@@ -164,6 +164,30 @@ export async function getDashboardData(): Promise<DashboardData> {
   const ofertaOrder =
     nonRejectionStages.find((s) => s.key === "oferta")?.order ?? 6;
 
+  // ── Data de aplicação (meta da semana e aplicações por mês) ────────
+  // Interesse ainda não é candidatura: só conta a vaga que chegou a
+  // Aplicado. A data é a do card; vazia (vaga arrastada para Aplicado, ou
+  // antiga), vale a entrada em Aplicado ou além pelo histórico; sem esse
+  // registro (vaga já aplicada antes do primeiro evento), o cadastro.
+  const appliedDate = new Map<string, Date>();
+  for (const app of allApps) {
+    if ((maxReached.get(app.id) ?? 0) < aplicadoOrder) continue;
+    let date = app.appliedAt ?? app.createdAt;
+    if (!app.appliedAt) {
+      for (const event of eventsByApp.get(app.id) ?? []) {
+        if (!ENTER_STAGE_EVENTS.has(event.type)) continue;
+        const from = event.fromStageId ? stageById.get(event.fromStageId) : null;
+        if (from && !from.isRejection && from.order >= aplicadoOrder) break;
+        const to = event.toStageId ? stageById.get(event.toStageId) : null;
+        if (to && !to.isRejection && to.order >= aplicadoOrder) {
+          date = event.createdAt;
+          break;
+        }
+      }
+    }
+    appliedDate.set(app.id, date);
+  }
+
   // ── KPIs ────────────────────────────────────────────────────────────
   const total = apps.length;
   const rejeitadas = rejectionStage
@@ -200,8 +224,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     months.push(point);
     monthIndex.set(key, point);
   }
-  for (const app of allApps) {
-    const date = app.appliedAt ?? app.createdAt;
+  for (const date of appliedDate.values()) {
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
     const point = monthIndex.get(key);
     if (point) point.total += 1;
@@ -298,8 +321,8 @@ export async function getDashboardData(): Promise<DashboardData> {
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekStart.getDate() + 7);
   const weekCount = apps.filter((app) => {
-    const date = app.appliedAt ?? app.createdAt;
-    return date >= weekStart && date < weekEnd;
+    const date = appliedDate.get(app.id);
+    return date && date >= weekStart && date < weekEnd;
   }).length;
 
   // ── Próximas ações (vagas ativas com data marcada) ─────────────────
