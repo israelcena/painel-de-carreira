@@ -3,6 +3,7 @@
 import {
   Archive,
   ArrowLeft,
+  ArrowRight,
   CornerUpLeft,
   Download,
   FileUser,
@@ -811,11 +812,14 @@ export function ApplicationModal({
   stages,
   onClose,
   onMove,
+  onArchive,
 }: {
   app: AppCard | null;
   stages: StageDTO[];
   onClose: () => void;
   onMove: (app: AppCard, toStageId: string) => void;
+  /** Pede confirmação no quadro antes de arquivar. */
+  onArchive: (app: AppCard) => void;
 }) {
   // Abre na visão de leitura; "Editar" (ou o lápis de uma seção) leva às abas
   const [mode, setMode] = useState<"view" | "edit">("view");
@@ -841,6 +845,12 @@ export function ApplicationModal({
     setMode("edit");
   };
 
+  // Próxima etapa do funil. Rejeitado fica de fora: a rejeição pede motivo e
+  // a volta ao funil é "Retornar ao funil"; na última etapa não há para onde ir.
+  const funnel = stages.filter((s) => !s.isRejection);
+  const funnelIndex = funnel.findIndex((s) => s.id === app.stageId);
+  const nextStage = funnelIndex >= 0 ? funnel[funnelIndex + 1] : undefined;
+
   return (
     <Modal
       open
@@ -864,27 +874,56 @@ export function ApplicationModal({
         </span>
       }
       actions={
-        // Um único botão que troca de papel: o foco fica nele ao alternar o modo
-        <button
-          type="button"
-          data-autofocus
-          onClick={editing ? () => setMode("view") : () => openEdit()}
-          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-extrabold transition ${
-            editing
-              ? "bg-panel text-ink-soft hover:bg-brand/10 hover:text-brand"
-              : "bg-gradient-to-r from-brand-violet to-brand-blue text-white shadow-card hover:brightness-105"
-          }`}
-        >
-          {editing ? (
-            <>
-              <ArrowLeft size={14} strokeWidth={2.5} /> Voltar
-            </>
-          ) : (
-            <>
-              <Pencil size={13} strokeWidth={2.5} /> Editar
-            </>
+        <>
+          {/* Só na visão: na edição, mover ou arquivar descartaria o formulário
+              não salvo (lá o Arquivar fica no rodapé dos Detalhes). No celular
+              fica só o ícone, para não espremer o título. */}
+          {!editing && (
+            <button
+              type="button"
+              onClick={() => onArchive(app)}
+              title="Arquivar vaga"
+              aria-label="Arquivar"
+              className="flex min-h-7 items-center gap-1.5 rounded-full bg-panel px-2 py-1.5 text-xs font-extrabold text-ink-soft transition hover:bg-brand/10 hover:text-brand sm:px-3"
+            >
+              <Archive size={13} strokeWidth={2.5} />
+              <span className="hidden sm:inline">Arquivar</span>
+            </button>
           )}
-        </button>
+          {!editing && nextStage && (
+            <button
+              type="button"
+              onClick={() => onMove(app, nextStage.id)}
+              title={`Mover para ${nextStage.name}`}
+              aria-label={`Avançar de fase: mover para ${nextStage.name}`}
+              className="flex min-h-7 items-center gap-1.5 rounded-full bg-panel px-2 py-1.5 text-xs font-extrabold text-ink-soft transition hover:bg-brand/10 hover:text-brand sm:px-3"
+            >
+              <span className="hidden sm:inline">Avançar de fase</span>
+              <ArrowRight size={14} strokeWidth={2.5} />
+            </button>
+          )}
+          {/* Um único botão que troca de papel: o foco fica nele ao alternar o modo */}
+          <button
+            type="button"
+            data-autofocus
+            onClick={editing ? () => setMode("view") : () => openEdit()}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-extrabold transition ${
+              editing
+                ? "bg-panel text-ink-soft hover:bg-brand/10 hover:text-brand"
+                : "bg-gradient-to-r from-brand-violet to-brand-blue text-white shadow-card hover:brightness-105"
+            }`}
+          >
+            {editing ? (
+              <>
+                <ArrowLeft size={14} strokeWidth={2.5} /> Voltar
+              </>
+            ) : (
+              <>
+                <Pencil size={13} strokeWidth={2.5} /> Editar
+              </>
+            )}
+          </button>
+        </>
       }
     >
       {editing ? (

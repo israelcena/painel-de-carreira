@@ -544,8 +544,9 @@ export function Board({
     setRejectTarget(null);
   };
 
-  // Movimentação vinda do modal de detalhes (select "Mover para etapa").
-  // O card entra no topo da raia de destino (mais recente em cima).
+  // Movimentação vinda do modal da vaga ("Avançar de fase", select "Mover para
+  // etapa", "Retornar ao funil"). O card entra no topo da raia de destino (mais
+  // recente em cima); o modal fecha e o toast diz para onde ele foi.
   const handleModalMove = (app: AppCard, toStageId: string) => {
     const toStage = stagesById[toStageId];
     if (!toStage || toStageId === app.stageId) return;
@@ -575,12 +576,15 @@ export function Board({
       ? (appsById[firstId]?.position ?? 2048) - 1024
       : 1024;
     commitMove(app.id, toStageId, position);
+    setToast(`Vaga movida para ${toStage.name}`);
   };
 
-  // Arquivar rápido pelo ícone do card: remove otimista e reverte se a action falhar
+  // Arquivar pelo ícone do card ou pelo cabeçalho do modal da vaga: remove
+  // otimista e reverte se a action falhar
   const confirmArchive = () => {
     if (!archiveTarget) return;
     const app = archiveTarget;
+    if (openApp?.id === app.id) setOpenApp(null);
     const snap = takeSnapshot();
     markPendingRemoval(app.id, true);
     setColumns((prev) => ({
@@ -738,11 +742,14 @@ export function Board({
         onClose={() => setCreateOpen(false)}
       />
 
+      {/* Some enquanto a confirmação de arquivar desta vaga está aberta (dois
+          Modals empilhados fechariam juntos no Escape); cancelar a traz de volta */}
       <ApplicationModal
-        app={openApp}
+        app={archiveTarget && archiveTarget.id === openApp?.id ? null : openApp}
         stages={stages}
         onClose={() => setOpenApp(null)}
         onMove={handleModalMove}
+        onArchive={setArchiveTarget}
       />
 
       <ResumePreviewModal

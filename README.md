@@ -33,7 +33,7 @@ As migrations e o seed das etapas rodam automaticamente na inicialização do co
 - **Arquivar rápido** pelo ícone do card, com confirmação — a vaga sai do quadro e dos indicadores do Dashboard, mas continua no histórico e nos gráficos históricos
 
 ### Em cada vaga
-Clicar no card abre uma **visão de leitura** com tudo da vaga (duas colunas no desktop, uma no celular). **Editar**, no cabeçalho, ou o lápis de cada seção, abre as abas de edição; salvar volta para a visão atualizada.
+Clicar no card abre uma **visão de leitura** com tudo da vaga (duas colunas no desktop, uma no celular). **Editar**, no cabeçalho, ou o lápis de cada seção, abre as abas de edição; salvar volta para a visão atualizada. Ao lado do Editar, **Avançar de fase** leva a vaga para a próxima etapa do funil (topo da raia) e **Arquivar** tira a vaga do quadro, com confirmação.
 
 - **Detalhes**: plataforma, salário, modelo de trabalho, cidade, link do anúncio, link da candidatura, prioridade e data de aplicação (ao criar a vaga, ela só vem preenchida com hoje de Aplicado em diante)
 - **Descrição da vaga**: o texto completo de requisitos e responsabilidades
