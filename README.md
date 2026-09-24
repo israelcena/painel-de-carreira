@@ -24,16 +24,18 @@ As migrations e o seed das etapas rodam automaticamente na inicialização do co
 
 ### Kanban de candidaturas
 - 7 etapas: Interesse → Aplicado → Contato/Screening → Entrevista → Teste Técnico → Oferta → Rejeitado
-- **Arrastar e soltar** entre colunas (mouse e touch — segure ~0,2s no celular)
+- **Arrastar e soltar** entre colunas pela alça (⋮⋮) à direita do card, com mouse ou touch (no celular, segure ~0,2s na alça); clicar no resto do card abre a vaga
 - Ao soltar uma vaga em **Rejeitado**, um modal pede o **motivo** (10 categorias + detalhes) e a **data**
 - **País obrigatório** em toda vaga, com a **bandeira** no card (Brasil incluído)
 - Vaga nova **entra no topo da raia**; o arraste manual continua livre, e **Ordenar por mais recentes** (por raia ou no quadro todo) reorganiza pela data de entrada na etapa
 - **Filtros**: pills **Tudo / Brasil / Exterior**, país multi-seleção e intervalo de entrada na etapa — no quadro todo ou só em uma raia (contador "visíveis/total"). Com busca, país ou data ativos o arraste fica desativado (um filtro de raia só desativa naquela raia); a origem não desativa
 - **Busca** por empresa/cargo na barra superior
-- **Arquivar rápido** pelo ícone do card, com confirmação — a vaga sai do quadro e continua no histórico e nas métricas
+- **Arquivar rápido** pelo ícone do card, com confirmação — a vaga sai do quadro e dos indicadores do Dashboard, mas continua no histórico e nos gráficos históricos
 
 ### Em cada vaga
-- **Detalhes**: plataforma, salário, modelo de trabalho, cidade, link do anúncio, link da candidatura, prioridade
+Clicar no card abre uma **visão de leitura** com tudo da vaga (duas colunas no desktop, uma no celular). **Editar**, no cabeçalho, ou o lápis de cada seção, abre as abas de edição; salvar volta para a visão atualizada.
+
+- **Detalhes**: plataforma, salário, modelo de trabalho, cidade, link do anúncio, link da candidatura, prioridade e data de aplicação (ao criar a vaga, ela só vem preenchida com hoje de Aplicado em diante)
 - **Descrição da vaga**: o texto completo de requisitos e responsabilidades
 - **Currículo**: a versão enviada para aquela vaga — escolha uma já salva em Documentos ou envie um arquivo novo; um ícone no card (ao lado dos dias na etapa) abre o currículo num visualizador com botão de download
 - **SWOT da candidatura**: forças e fraquezas do seu perfil para aquela vaga, oportunidades e ameaças do processo
@@ -42,18 +44,20 @@ As migrations e o seed das etapas rodam automaticamente na inicialização do co
 
 ### Planejamento e documentos
 - **SWOT geral de carreira** na página Planejar
-- **Currículos**: upload de PDF/DOC/DOCX (até 8 MB) com várias versões nomeadas, download e exclusão; cada versão mostra em quais vagas foi usada
+- **Currículos**: upload de PDF, DOC, DOCX, ODT, RTF, TXT ou MD (até 8 MB) com várias versões nomeadas, download e exclusão; cada versão mostra em quais vagas foi usada
 - **Pitch e rascunhos**: textos livres para reaproveitar nas candidaturas
 
 ### Dashboard
 - KPIs: aplicações, ativas, entrevistas, ofertas, rejeições e taxa de resposta
 - **Meta semanal** de aplicações com barra de progresso
 - **Próximas ações** pendentes, com as vencidas em destaque
-- Aplicações por mês, **funil de conversão** (derivado do histórico), motivos de rejeição, tempo médio por etapa e tabela **por país** (Brasil incluído)
+- Tabela **por país** (Brasil incluído)
+- Aplicações por mês, **funil de conversão** (derivado do histórico e da etapa atual de cada vaga), motivos de rejeição, tempo médio por etapa e atividade recente
+- KPIs, meta, próximas ações e a tabela por país contam só vagas **não arquivadas**; os gráficos históricos e a atividade recente incluem as arquivadas
 
 ### Interface
 - Visual claro em tons de lavanda, cards com pills de prioridade e colunas coloridas
-- **Responsivo**: do celular (navegação inferior, uma coluna por vez com swipe) a telas ultrawide (as 7 colunas visíveis de uma vez)
+- **Responsivo**: do celular (navegação inferior, uma coluna por vez com swipe) a telas ultrawide (as 7 colunas visíveis de uma vez); a partir de 1920px as páginas usam a largura toda, com colunas que acompanham a largura
 
 ## Variáveis de ambiente (`.env`)
 
@@ -90,7 +94,10 @@ docker compose up -d db
 bun install
 bunx prisma migrate dev   # aplica migrations + seed
 bun run dev               # http://localhost:3000
+bun run lint              # ignora .claude/worktrees (checkouts de outras branches)
 ```
+
+Para abrir o `next dev` no celular por um Cloudflare Tunnel (`cloudflared tunnel --url http://localhost:3000`), os domínios `*.trycloudflare.com` e `*.cloudflared.com` já estão liberados em `allowedDevOrigins` no `next.config.ts`; outro domínio precisa ser acrescentado ali, senão a página carrega mas não hidrata.
 
 ### Atualizando uma instalação existente
 
@@ -117,9 +124,11 @@ src/
   app/(app)/documentos       → currículos e rascunhos de pitch
   app/(app)/historico        → log de eventos com filtros
   app/login                  → autenticação
-  app/actions/               → server actions (vagas, SWOT, documentos, auth)
+  app/actions/               → server actions (vagas, SWOT, documentos, rascunhos, meta semanal, auth)
   app/api/documentos/[id]    → download dos currículos (`?inline=1` exibe PDF e texto no navegador)
-  components/                → board (Board, Column, FilterPopover), modais, swot, documents,
+  components/                → board (Board, Column, FilterPopover), modals (ApplicationView = visão
+                               de leitura, ApplicationModal = edição, NewApplication, Reject,
+                               ResumePreview), history (HistoryList, EventTimeline), swot, documents,
                                dashboard, layout, ui (Modal, ConfirmDialog, CountrySelect, Flag)
   lib/                       → prisma, sessão, métricas, domínio, países, filtros do quadro (boardFilters)
 prisma/                      → schema, migrations, seed das etapas
