@@ -144,7 +144,7 @@ export function DraftsSection({ drafts }: { drafts: TextDocDTO[] }) {
           Nenhum rascunho ainda — crie um acima.
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 3xl:grid-cols-[repeat(auto-fill,minmax(36rem,1fr))]">
           {drafts.map((draft) => (
             <DraftCard key={draft.id} draft={draft} />
           ))}

@@ -50,8 +50,13 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
   filtro de raia desativa o arraste só dentro daquela raia.
 - **Telas grandes aproveitam a largura.** Histórico, Documentos e Planejamento vão até 1800px, como
   o Dashboard (antes 1024px). No Histórico, a partir de 1280px cada evento vira uma linha em colunas
-  alinhadas (vaga · evento · data). Em Documentos, a partir de 1920px (novo breakpoint `3xl`),
-  Currículos e Pitch ficam lado a lado. O modal da vaga cresce para 768px (1280px+) e 896px (1536px+).
+  alinhadas (vaga · evento · data). Em Documentos, a lista de currículos fica em duas colunas a
+  partir de 1280px. O modal da vaga cresce para 768px (1280px+) e 896px (1536px+).
+- **Telas gigantes (1920px+, novo breakpoint `3xl`) usam a largura toda**, sem o limite de 1800px,
+  com colunas adaptativas (o número de colunas acompanha a largura): cards do Dashboard e a lista de
+  "Atividade recente", eventos do Histórico (em cartões), currículos e rascunhos em Documentos. O
+  SWOT do Planejamento mostra os quatro quadrantes lado a lado e as colunas do Quadro deixam de
+  parar em 384px, preenchendo a tela.
 
 ### Corrigido
 
