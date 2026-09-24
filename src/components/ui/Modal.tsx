@@ -9,6 +9,7 @@ export function Modal({
   onClose,
   title,
   subtitle,
+  actions,
   children,
   wide = false,
 }: {
@@ -16,6 +17,8 @@ export function Modal({
   onClose: () => void;
   title: React.ReactNode;
   subtitle?: React.ReactNode;
+  /** Botões extras no cabeçalho, à esquerda do fechar. */
+  actions?: React.ReactNode;
   children: React.ReactNode;
   wide?: boolean;
 }) {
@@ -77,14 +80,17 @@ export function Modal({
               </div>
             )}
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Fechar"
-            className="rounded-full p-1.5 text-muted transition hover:bg-panel hover:text-ink"
-          >
-            <X size={18} />
-          </button>
+          <div className="flex shrink-0 items-center gap-1.5">
+            {actions}
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Fechar"
+              className="rounded-full p-1.5 text-muted transition hover:bg-panel hover:text-ink"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
         <div className="px-5 py-4">{children}</div>
       </div>

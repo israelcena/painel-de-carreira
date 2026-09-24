@@ -33,6 +33,11 @@ export function daysSince(date: Date | string): number {
   return Math.max(0, Math.floor(ms / 86_400_000));
 }
 
+/** O dia local da data já passou (ex.: próxima ação atrasada). */
+export function isPastDay(date: Date | string): boolean {
+  return new Date(date).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0);
+}
+
 export function relativeTime(date: Date | string): string {
   const diffMs = new Date(date).getTime() - Date.now();
   const diffMin = Math.round(diffMs / 60_000);

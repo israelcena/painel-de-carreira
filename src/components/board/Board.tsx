@@ -199,7 +199,7 @@ export function Board({
   const [rejectTarget, setRejectTarget] = useState<AppCard | null>(null);
   const [rejectError, setRejectError] = useState<string | null>(null);
   const [rejectPending, startRejectTransition] = useTransition();
-  const [editing, setEditing] = useState<AppCard | null>(null);
+  const [openApp, setOpenApp] = useState<AppCard | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [createStageId, setCreateStageId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -240,7 +240,7 @@ export function Board({
     setAppsById(byId);
     setColumns(cols);
     // Mantém os modais apontando para os dados frescos
-    if (editing) setEditing(apps.find((a) => a.id === editing.id) ?? null);
+    if (openApp) setOpenApp(apps.find((a) => a.id === openApp.id) ?? null);
     if (archiveTarget) {
       setArchiveTarget(fresh.find((a) => a.id === archiveTarget.id) ?? null);
     }
@@ -562,7 +562,7 @@ export function Board({
       ];
       return next;
     });
-    setEditing(null);
+    setOpenApp(null);
 
     if (toStage.isRejection) {
       setRejectError(null);
@@ -700,7 +700,7 @@ export function Board({
                 setCreateStageId(stageId);
                 setCreateOpen(true);
               }}
-              onOpen={setEditing}
+              onOpen={setOpenApp}
               onArchive={setArchiveTarget}
               onViewResume={(app) => setResumeViewId(app.id)}
             />
@@ -739,9 +739,9 @@ export function Board({
       />
 
       <ApplicationModal
-        app={editing}
+        app={openApp}
         stages={stages}
-        onClose={() => setEditing(null)}
+        onClose={() => setOpenApp(null)}
         onMove={handleModalMove}
       />
 
