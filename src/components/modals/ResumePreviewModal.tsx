@@ -151,7 +151,7 @@ export function ResumePreviewModal({
     <Modal
       open
       onClose={onClose}
-      wide
+      size="lg"
       title={resume.name}
       subtitle={`${app.company} — ${app.roleTitle}`}
     >
