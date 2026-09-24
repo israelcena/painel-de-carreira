@@ -21,6 +21,9 @@
     0 1px 3px rgba(80, 95, 160, 0.14), 0 6px 18px rgba(80, 95, 160, 0.1);
   --shadow-float: 0 10px 30px rgba(60, 75, 140, 0.3);
   --shadow-top: 0 -4px 16px rgba(60, 75, 140, 0.12);
+
+  /* Telas gigantes (1920px+) */
+  --breakpoint-3xl: 120rem;
 }
 
 html,

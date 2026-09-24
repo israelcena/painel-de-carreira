@@ -107,7 +107,7 @@ export default async function DashboardPage() {
         apenas vagas não arquivadas.
       </p>
 
-      <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
         <WeeklyGoalCard
           goal={data.metaSemana.goal}
           count={data.metaSemana.count}
@@ -272,7 +272,7 @@ export default async function DashboardPage() {
                       style={{ backgroundColor: EVENT_COLORS[event.type] ?? "#8a92b2" }}
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-ink">
+                      <p className="text-sm font-bold wrap-break-word text-ink">
                         <span className="font-extrabold">
                           {event.application.company}
                         </span>{" "}

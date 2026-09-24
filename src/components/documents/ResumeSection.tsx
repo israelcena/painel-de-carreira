@@ -91,9 +91,13 @@ export function ResumeSection({ documents }: { documents: DocumentDTO[] }) {
 
   return (
     <section className="rounded-2xl bg-white p-4 shadow-card md:p-5">
-      <h2 className="mb-3 text-sm font-extrabold uppercase tracking-wide text-ink-soft">
-        Currículos
-      </h2>
+      {/* Lado a lado (3xl), acompanha a altura do cabeçalho de Rascunhos
+          (campo + botão, 38px) para títulos e conteúdos alinharem */}
+      <div className="mb-3 flex items-center 3xl:min-h-[2.375rem]">
+        <h2 className="text-sm font-extrabold uppercase tracking-wide text-ink-soft">
+          Currículos
+        </h2>
+      </div>
 
       <form
         ref={formRef}

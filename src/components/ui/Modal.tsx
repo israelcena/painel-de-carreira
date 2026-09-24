@@ -63,7 +63,7 @@ export function Modal({
       <div
         ref={panelRef}
         className={`nice-scroll relative z-10 max-h-[94dvh] w-full overflow-y-auto rounded-t-2xl bg-white shadow-float md:rounded-2xl ${
-          wide ? "md:max-w-2xl" : "md:max-w-lg"
+          wide ? "md:max-w-2xl xl:max-w-3xl 2xl:max-w-4xl" : "md:max-w-lg"
         }`}
       >
         <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-line bg-white px-5 py-4">

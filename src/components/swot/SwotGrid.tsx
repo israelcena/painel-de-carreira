@@ -107,7 +107,7 @@ function Quadrant({
             key={item.id}
             className="group flex items-start gap-2 rounded-lg bg-panel px-2.5 py-1.5"
           >
-            <span className="min-w-0 flex-1 whitespace-pre-wrap text-[13px] font-semibold leading-snug text-ink">
+            <span className="min-w-0 flex-1 whitespace-pre-wrap wrap-break-word text-[13px] font-semibold leading-snug text-ink">
               {item.text}
             </span>
             <button
@@ -182,7 +182,7 @@ export function SwotGrid({
 
   return (
     <div
-      className={`grid gap-3 ${compact ? "sm:grid-cols-2" : "md:grid-cols-2 md:gap-4"}`}
+      className={`grid grid-cols-1 gap-3 ${compact ? "sm:grid-cols-2" : "md:grid-cols-2 md:gap-4"}`}
     >
       {SWOT_ORDER.map((quadrant) => (
         <Quadrant
