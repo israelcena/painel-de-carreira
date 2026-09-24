@@ -305,7 +305,7 @@ export function ApplicationView({
       )}
 
       {/* A lateral vem antes no DOM: no mobile os dados curtos ficam no topo */}
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1fr)_15rem]">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1fr)_15rem] 2xl:grid-cols-[minmax(0,1fr)_18rem] 3xl:gap-6">
         <aside className="min-w-0 space-y-4 self-start rounded-xl bg-panel p-3 md:col-start-2 md:row-start-1">
           <Section title="Dados da vaga" onEdit={edit("detalhes")}>
             <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5">
@@ -385,34 +385,40 @@ export function ApplicationView({
           </Section>
         </aside>
 
-        <div className="min-w-0 space-y-5 md:col-start-1 md:row-start-1">
-          <Section title="Descrição da vaga" onEdit={edit("descricao")}>
-            {app.jobDescription ? (
-              <LongText text={app.jobDescription} />
-            ) : (
-              <Empty>Nenhuma descrição salva.</Empty>
-            )}
-          </Section>
+        {/* Telas gigantes: textos numa coluna e SWOT + histórico noutra, para
+            as linhas não passarem de ~100 caracteres */}
+        <div className="grid min-w-0 grid-cols-1 gap-5 md:col-start-1 md:row-start-1 3xl:grid-cols-2 3xl:gap-x-6">
+          <div className="min-w-0 space-y-5">
+            <Section title="Descrição da vaga" onEdit={edit("descricao")}>
+              {app.jobDescription ? (
+                <LongText text={app.jobDescription} />
+              ) : (
+                <Empty>Nenhuma descrição salva.</Empty>
+              )}
+            </Section>
 
-          <Section title="Observações" onEdit={edit("detalhes")}>
-            {app.notes ? (
-              <LongText text={app.notes} />
-            ) : (
-              <Empty>Sem observações.</Empty>
-            )}
-          </Section>
+            <Section title="Observações" onEdit={edit("detalhes")}>
+              {app.notes ? (
+                <LongText text={app.notes} />
+              ) : (
+                <Empty>Sem observações.</Empty>
+              )}
+            </Section>
+          </div>
 
-          <Section title="Análise SWOT" onEdit={edit("swot")}>
-            <SwotSummary app={app} />
-          </Section>
+          <div className="min-w-0 space-y-5">
+            <Section title="Análise SWOT" onEdit={edit("swot")}>
+              <SwotSummary app={app} />
+            </Section>
 
-          <Section
-            title="Histórico"
-            editLabel="Anotar no histórico"
-            onEdit={edit("historico")}
-          >
-            <HistorySummary app={app} stageNameById={stageNameById} />
-          </Section>
+            <Section
+              title="Histórico"
+              editLabel="Anotar no histórico"
+              onEdit={edit("historico")}
+            >
+              <HistorySummary app={app} stageNameById={stageNameById} />
+            </Section>
+          </div>
         </div>
       </div>
     </div>

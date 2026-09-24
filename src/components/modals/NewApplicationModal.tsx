@@ -294,7 +294,7 @@ export function NewApplicationModal({
   onClose: () => void;
 }) {
   return (
-    <Modal open={open} onClose={onClose} title="Nova vaga" wide>
+    <Modal open={open} onClose={onClose} title="Nova vaga" size="lg">
       {/* key força reset do formulário a cada abertura */}
       <FormBody
         key={String(open)}
