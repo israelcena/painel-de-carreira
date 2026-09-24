@@ -98,6 +98,11 @@ model Application {
   nextActionNote String?
   nextActionAt   DateTime?
 
+  // Currículo enviado para esta vaga (uma versão da biblioteca de Documentos).
+  // Excluir o documento só desvincula a vaga.
+  resume   Document? @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+  resumeId String?
+
   archivedAt DateTime?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
@@ -106,6 +111,7 @@ model Application {
   swotItems SwotItem[]
 
   @@index([stageId])
+  @@index([resumeId])
   @@map("applications")
 }
 
@@ -130,6 +136,8 @@ model Document {
   data      Bytes
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  applications Application[]
 
   @@map("documents")
 }

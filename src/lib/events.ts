@@ -40,6 +40,14 @@ export function describeEvent(
     case "NOTE":
       return `Nota: ${str(data.text) ?? ""}`;
     case "EDITED": {
+      // Troca de currículo (actions/documents.ts): nomes gravados no evento
+      const resume = str(data.resumeName);
+      if (resume) return `Currículo vinculado: ${resume}`;
+      const previousResume = str(data.previousResumeName);
+      if (previousResume) {
+        const reason = str(data.reason);
+        return `Currículo desvinculado: ${previousResume}${reason ? ` (${reason})` : ""}`;
+      }
       const fields = Array.isArray(data.fields) ? (data.fields as string[]) : [];
       return fields.length > 0 ? `Editada: ${fields.join(", ")}` : "Editada";
     }

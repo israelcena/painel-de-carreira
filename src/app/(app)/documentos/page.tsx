@@ -2,25 +2,15 @@ import type { Metadata } from "next";
 import { DraftsSection } from "@/components/documents/DraftsSection";
 import { ResumeSection } from "@/components/documents/ResumeSection";
 import { prisma } from "@/lib/db";
-import type { DocumentDTO, TextDocDTO } from "@/lib/types";
+import { listDocumentsForUi } from "@/lib/documents";
+import type { TextDocDTO } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Documentos" };
 
 export default async function DocumentosPage() {
   const [documents, textDocs] = await Promise.all([
-    prisma.document.findMany({
-      // nunca carregar o campo `data` (bytes) na listagem
-      select: {
-        id: true,
-        name: true,
-        fileName: true,
-        mimeType: true,
-        size: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: "desc" },
-    }),
+    listDocumentsForUi(),
     prisma.textDoc.findMany({ orderBy: { createdAt: "asc" } }),
   ]);
 
@@ -36,7 +26,7 @@ export default async function DocumentosPage() {
         </p>
       </div>
 
-      <ResumeSection documents={documents as DocumentDTO[]} />
+      <ResumeSection documents={documents} />
       <DraftsSection drafts={textDocs as TextDocDTO[]} />
     </div>
   );

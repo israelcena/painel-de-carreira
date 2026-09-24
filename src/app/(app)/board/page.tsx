@@ -24,6 +24,8 @@ export default async function BoardPage() {
           take: 1,
           select: { createdAt: true },
         },
+        // Select explícito: nunca carregar os bytes do currículo no quadro
+        resume: { select: { id: true, name: true, fileName: true } },
       },
     }),
   ]);
@@ -54,6 +56,7 @@ export default async function BoardPage() {
     createdAt: app.createdAt,
     noteCount: app._count.events,
     stageEnteredAt: app.events[0]?.createdAt ?? app.createdAt,
+    resume: app.resume,
   }));
 
   return <Board stages={stages as StageDTO[]} apps={cards} />;

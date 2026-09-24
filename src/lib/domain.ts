@@ -100,6 +100,20 @@ export const SWOT_CONFIG: Record<
   },
 };
 
+// Currículos (Documentos e aba Currículo da vaga). Compartilhado com o cliente
+// para o `accept` dos inputs e a checagem de tamanho antes do envio.
+export const DOCUMENT_MAX_BYTES = 8 * 1024 * 1024; // 8 MB
+export const DOCUMENT_TOO_LARGE = "Arquivo muito grande (máx. 8 MB).";
+export const DOCUMENT_EXTENSIONS = [
+  ".pdf",
+  ".doc",
+  ".docx",
+  ".odt",
+  ".rtf",
+  ".txt",
+  ".md",
+];
+
 export const PLATFORM_SUGGESTIONS = [
   "LinkedIn",
   "Gupy",

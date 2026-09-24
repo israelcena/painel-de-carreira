@@ -8,6 +8,7 @@ import {
   Clock,
   ExternalLink,
   FileText,
+  FileUser,
   GripVertical,
   MessageSquareText,
   Send,
@@ -72,7 +73,8 @@ export function CardBody({
         </p>
       )}
 
-      <div className="mt-2.5 flex items-center gap-2.5 text-muted">
+      {/* flex-wrap: com todos os indicadores o rodapé não cabe nas raias estreitas do 2xl */}
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-muted">
         {app.appliedAt && (
           <span
             title={`Aplicada em ${formatDate(app.appliedAt)}`}
@@ -103,19 +105,37 @@ export function CardBody({
           <Clock size={11} strokeWidth={2.5} />
           {daysSince(app.stageEnteredAt)}d
         </span>
-        {app.jobUrl && (
-          <a
-            href={app.jobUrl}
-            target="_blank"
-            rel="noreferrer noopener"
-            onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-            onPointerUp={(e) => e.stopPropagation()}
-            title="Abrir vaga"
-            className="ml-auto rounded-md p-1 transition hover:bg-panel hover:text-brand"
-          >
-            <ExternalLink size={13} strokeWidth={2.5} />
-          </a>
+        {(app.resume || app.jobUrl) && (
+          // Links param a propagação para não abrir o modal nem iniciar arraste
+          <div className="ml-auto flex shrink-0 items-center gap-1">
+            {app.resume && (
+              <a
+                href={`/api/documentos/${app.resume.id}`}
+                download={app.resume.fileName}
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                onPointerUp={(e) => e.stopPropagation()}
+                title={`Baixar currículo: ${app.resume.name}`}
+                className="rounded-md p-1 transition hover:bg-panel hover:text-brand"
+              >
+                <FileUser size={13} strokeWidth={2.5} />
+              </a>
+            )}
+            {app.jobUrl && (
+              <a
+                href={app.jobUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                onPointerUp={(e) => e.stopPropagation()}
+                title="Abrir vaga"
+                className="rounded-md p-1 transition hover:bg-panel hover:text-brand"
+              >
+                <ExternalLink size={13} strokeWidth={2.5} />
+              </a>
+            )}
+          </div>
         )}
       </div>
     </>

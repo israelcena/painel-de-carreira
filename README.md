@@ -35,13 +35,14 @@ As migrations e o seed das etapas rodam automaticamente na inicialização do co
 ### Em cada vaga
 - **Detalhes**: plataforma, salário, modelo de trabalho, cidade, link do anúncio, link da candidatura, prioridade
 - **Descrição da vaga**: o texto completo de requisitos e responsabilidades
+- **Currículo**: a versão enviada para aquela vaga — escolha uma já salva em Documentos ou envie um arquivo novo; o card ganha um ícone para baixá-lo direto
 - **SWOT da candidatura**: forças e fraquezas do seu perfil para aquela vaga, oportunidades e ameaças do processo
 - **Histórico**: timeline com tudo o que aconteceu, mais notas livres
 - **Próxima ação com data** — o card destaca em vermelho quando vence
 
 ### Planejamento e documentos
 - **SWOT geral de carreira** na página Planejar
-- **Currículos**: upload de PDF/DOC/DOCX (até 8 MB) com várias versões nomeadas, download e exclusão
+- **Currículos**: upload de PDF/DOC/DOCX (até 8 MB) com várias versões nomeadas, download e exclusão; cada versão mostra em quais vagas foi usada
 - **Pitch e rascunhos**: textos livres para reaproveitar nas candidaturas
 
 ### Dashboard
@@ -97,7 +98,8 @@ As migrations rodam sozinhas no build da Vercel e na inicialização do containe
 `remove_section_country_required` remove a antiga divisão Nacional/Internacional e grava país `BR`
 nas vagas nacionais — ela apaga uma coluna, então faça um snapshot/branch no Neon antes do deploy.
 A migration seguinte, `renumber_positions_per_stage`, renumera as posições das raias unidas
-preservando a ordem manual; não há passo pós-deploy. Durante os segundos entre a migration e a
+preservando a ordem manual; não há passo pós-deploy. A migration `application_resume` só acrescenta a coluna
+opcional do currículo por vaga e não afeta o deploy antigo. Durante os segundos entre a migration e a
 promoção do deploy novo, o deploy antigo retorna erro — publique num momento tranquilo. Detalhes e
 observações sobre previews em [CHANGELOG.md](CHANGELOG.md).
 
