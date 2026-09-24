@@ -24,6 +24,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ### Adicionado
 
+- **Visão da vaga ao clicar no card.** O clique não abre mais direto o formulário: abre uma visão
+  de leitura com tudo da vaga — etapa e dias nela, próxima ação (em vermelho se atrasada), dados,
+  links, currículo, descrição, observações, análise SWOT e histórico. No desktop fica em duas
+  colunas (textos longos à esquerda, dados curtos na lateral); no mobile, uma coluna com os dados
+  no topo. **Editar**, no cabeçalho, abre as abas de edição de antes, e o lápis de cada seção abre
+  direto na aba certa. **Salvar alterações** volta para a visão já atualizada (antes fechava o
+  modal), e **Voltar** sai da edição sem salvar. Arquivar, excluir e mover de etapa continuam
+  fechando o modal.
 - **Currículo em cada vaga.** Nova aba **Currículo** no modal da vaga: vincule uma versão já salva
   em Documentos ou envie um arquivo novo (ex.: CV adaptado para a vaga), que entra na biblioteca e
   já fica vinculado. Um currículo por vaga; trocar substitui o vínculo e "Remover vínculo" mantém o

@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useRef } from "react";
 import { REJECTION_REASON_LABELS } from "@/lib/domain";
-import { daysSince, formatDate } from "@/lib/format";
+import { daysSince, formatDate, isPastDay } from "@/lib/format";
 import type { AppCard } from "@/lib/types";
 import { Flag } from "@/components/ui/Flag";
 import { PriorityPill } from "@/components/ui/PriorityPill";
@@ -55,9 +55,7 @@ export function CardBody({
       {(app.nextActionNote || app.nextActionAt) && (
         <p
           className={`mt-1.5 flex items-center gap-1 truncate text-[11px] font-bold ${
-            app.nextActionAt &&
-            new Date(app.nextActionAt).setHours(0, 0, 0, 0) <
-              new Date().setHours(0, 0, 0, 0)
+            app.nextActionAt && isPastDay(app.nextActionAt)
               ? "text-red-500"
               : "text-ink-soft"
           }`}

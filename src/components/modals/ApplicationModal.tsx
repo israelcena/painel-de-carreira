@@ -2,11 +2,12 @@
 
 import {
   Archive,
-  CalendarX2,
+  ArrowLeft,
   CornerUpLeft,
   Download,
   FileUser,
   Loader2,
+  Pencil,
   Trash2,
   Unlink,
   Upload,
@@ -26,6 +27,7 @@ import {
   uploadApplicationResume,
 } from "@/app/actions/documents";
 import { getSwotItems } from "@/app/actions/swot";
+import { EventTimeline } from "@/components/history/EventTimeline";
 import { SwotGrid } from "@/components/swot/SwotGrid";
 import {
   DOCUMENT_EXTENSIONS,
@@ -34,16 +36,9 @@ import {
   PLATFORM_SUGGESTIONS,
   PRIORITY_LABELS,
   PRIORITY_ORDER,
-  REJECTION_REASON_LABELS,
   WORK_MODEL_LABELS,
 } from "@/lib/domain";
-import { describeEvent, EVENT_COLORS } from "@/lib/events";
-import {
-  dateToInput,
-  formatDate,
-  formatDateTime,
-  relativeTime,
-} from "@/lib/format";
+import { dateToInput } from "@/lib/format";
 import type {
   AppCard,
   DocumentDTO,
@@ -63,15 +58,24 @@ import {
 import { Flag } from "@/components/ui/Flag";
 import { Modal } from "@/components/ui/Modal";
 import { PriorityPill } from "@/components/ui/PriorityPill";
+import {
+  ApplicationView,
+  RejectionBanner,
+  type ApplicationTab,
+} from "./ApplicationView";
 
 function DetailsTab({
   app,
   stages,
+  onSaved,
   onClose,
   onMove,
 }: {
   app: AppCard;
   stages: StageDTO[];
+  /** Salvou: volta para a visão. */
+  onSaved: () => void;
+  /** Arquivou ou excluiu: a vaga sai do quadro e o modal fecha. */
   onClose: () => void;
   onMove: (app: AppCard, toStageId: string) => void;
 }) {
@@ -100,9 +104,6 @@ function DetailsTab({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const stage = stages.find((s) => s.id === app.stageId);
-  const rejectedFrom = stages.find((s) => s.id === app.rejectedFromStageId);
-
   const save = () => {
     setError(null);
     startTransition(async () => {
@@ -122,7 +123,7 @@ function DetailsTab({
         nextActionAt: nextActionAt || null,
         notes: notes || null,
       });
-      if (result.ok) onClose();
+      if (result.ok) onSaved();
       else setError(result.error);
     });
   };
@@ -157,29 +158,18 @@ function DetailsTab({
       }}
       className="space-y-4"
     >
-      {stage?.isRejection && app.rejectionReason && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-3">
-          <p className="flex items-center gap-2 text-sm font-extrabold text-red-600">
-            <CalendarX2 size={15} />
-            Rejeitada em {formatDate(app.rejectedAt)}
-            {rejectedFrom ? ` (estava em ${rejectedFrom.name})` : ""}
-          </p>
-          <p className="mt-1 text-sm font-semibold text-red-500">
-            Motivo: {REJECTION_REASON_LABELS[app.rejectionReason]}
-            {app.rejectionNote ? ` — ${app.rejectionNote}` : ""}
-          </p>
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() =>
-              onMove(app, app.rejectedFromStageId ?? stages[0]?.id ?? "")
-            }
-            className="mt-2 flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-extrabold text-ink-soft shadow-card transition hover:text-brand"
-          >
-            <CornerUpLeft size={13} /> Retornar ao funil
-          </button>
-        </div>
-      )}
+      <RejectionBanner app={app} stages={stages}>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() =>
+            onMove(app, app.rejectedFromStageId ?? stages[0]?.id ?? "")
+          }
+          className="mt-2 flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-extrabold text-ink-soft shadow-card transition hover:text-brand"
+        >
+          <CornerUpLeft size={13} /> Retornar ao funil
+        </button>
+      </RejectionBanner>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Empresa" htmlFor="ed-company" required>
@@ -811,37 +801,7 @@ function HistoryTab({
 
       <ErrorBox message={error} />
 
-      {events === null ? (
-        <p className="py-6 text-center text-sm font-semibold text-muted">
-          Carregando histórico...
-        </p>
-      ) : events.length === 0 ? (
-        <p className="py-6 text-center text-sm font-semibold text-muted">
-          Nenhum evento registrado.
-        </p>
-      ) : (
-        <ol className="relative space-y-4 border-l-2 border-line pl-4">
-          {events.map((event) => (
-            <li key={event.id} className="relative">
-              <span
-                className="absolute -left-[1.4375rem] top-1 size-3 rounded-full border-2 border-white"
-                style={{
-                  backgroundColor: EVENT_COLORS[event.type] ?? "#8a92b2",
-                }}
-              />
-              <p className="text-sm font-bold leading-snug text-ink">
-                {describeEvent(event, stageNameById)}
-              </p>
-              <p
-                className="text-[11px] font-semibold text-muted"
-                title={formatDateTime(event.createdAt)}
-              >
-                {formatDateTime(event.createdAt)} · {relativeTime(event.createdAt)}
-              </p>
-            </li>
-          ))}
-        </ol>
-      )}
+      <EventTimeline events={events} stageNameById={stageNameById} />
     </div>
   );
 }
@@ -857,22 +817,29 @@ export function ApplicationModal({
   onClose: () => void;
   onMove: (app: AppCard, toStageId: string) => void;
 }) {
-  const [tab, setTab] = useState<
-    "detalhes" | "descricao" | "curriculo" | "swot" | "historico"
-  >("detalhes");
+  // Abre na visão de leitura; "Editar" (ou o lápis de uma seção) leva às abas
+  const [mode, setMode] = useState<"view" | "edit">("view");
+  const [tab, setTab] = useState<ApplicationTab>("detalhes");
   const stageNameById = useMemo(
     () => Object.fromEntries(stages.map((s) => [s.id, s.name])),
     [stages]
   );
 
-  // Volta para a aba Detalhes ao trocar de vaga (ajuste durante o render)
+  // Volta para a visão ao trocar de vaga (ajuste durante o render)
   const [lastAppId, setLastAppId] = useState<string | null>(null);
   if (app && lastAppId !== app.id) {
     setLastAppId(app.id);
+    setMode("view");
     setTab("detalhes");
   }
 
   if (!app) return null;
+
+  const editing = mode === "edit";
+  const openEdit = (next: ApplicationTab = "detalhes") => {
+    setTab(next);
+    setMode("edit");
+  };
 
   return (
     <Modal
@@ -896,46 +863,81 @@ export function ApplicationModal({
           <PriorityPill priority={app.priority} />
         </span>
       }
+      actions={
+        // Um único botão que troca de papel: o foco fica nele ao alternar o modo
+        <button
+          type="button"
+          data-autofocus
+          onClick={editing ? () => setMode("view") : () => openEdit()}
+          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-extrabold transition ${
+            editing
+              ? "bg-panel text-ink-soft hover:bg-brand/10 hover:text-brand"
+              : "bg-gradient-to-r from-brand-violet to-brand-blue text-white shadow-card hover:brightness-105"
+          }`}
+        >
+          {editing ? (
+            <>
+              <ArrowLeft size={14} strokeWidth={2.5} /> Voltar
+            </>
+          ) : (
+            <>
+              <Pencil size={13} strokeWidth={2.5} /> Editar
+            </>
+          )}
+        </button>
+      }
     >
-      <div className="mb-4 flex gap-1 rounded-xl bg-panel p-1">
-        {(
-          [
-            ["detalhes", "Detalhes"],
-            ["descricao", "Descrição"],
-            ["curriculo", "Currículo"],
-            ["swot", "SWOT"],
-            ["historico", "Histórico"],
-          ] as const
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setTab(key)}
-            className={`flex-1 rounded-lg py-1.5 text-xs font-extrabold transition sm:text-sm ${
-              tab === key
-                ? "bg-white text-brand shadow-card"
-                : "text-muted hover:text-ink-soft"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {editing ? (
+        <>
+          <div className="mb-4 flex gap-1 rounded-xl bg-panel p-1">
+            {(
+              [
+                ["detalhes", "Detalhes"],
+                ["descricao", "Descrição"],
+                ["curriculo", "Currículo"],
+                ["swot", "SWOT"],
+                ["historico", "Histórico"],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setTab(key)}
+                className={`flex-1 rounded-lg py-1.5 text-xs font-extrabold transition sm:text-sm ${
+                  tab === key
+                    ? "bg-white text-brand shadow-card"
+                    : "text-muted hover:text-ink-soft"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
 
-      {tab === "detalhes" && (
-        <DetailsTab
-          key={app.id}
+          {tab === "detalhes" && (
+            <DetailsTab
+              key={app.id}
+              app={app}
+              stages={stages}
+              onSaved={() => setMode("view")}
+              onClose={onClose}
+              onMove={onMove}
+            />
+          )}
+          {tab === "descricao" && <DescriptionTab key={app.id} app={app} />}
+          {tab === "curriculo" && <ResumeTab key={app.id} app={app} />}
+          {tab === "swot" && <SwotTab app={app} />}
+          {tab === "historico" && (
+            <HistoryTab app={app} stageNameById={stageNameById} />
+          )}
+        </>
+      ) : (
+        <ApplicationView
           app={app}
           stages={stages}
-          onClose={onClose}
-          onMove={onMove}
+          stageNameById={stageNameById}
+          onEdit={openEdit}
         />
-      )}
-      {tab === "descricao" && <DescriptionTab key={app.id} app={app} />}
-      {tab === "curriculo" && <ResumeTab key={app.id} app={app} />}
-      {tab === "swot" && <SwotTab app={app} />}
-      {tab === "historico" && (
-        <HistoryTab app={app} stageNameById={stageNameById} />
       )}
     </Modal>
   );

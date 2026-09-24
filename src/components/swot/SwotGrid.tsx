@@ -28,6 +28,7 @@ function Quadrant({
   onAdded,
   onRemoved,
   compact,
+  readOnly,
 }: {
   quadrant: SwotQuadrant;
   applicationId: string | null;
@@ -35,6 +36,7 @@ function Quadrant({
   onAdded: (item: SwotItemDTO) => void;
   onRemoved: (id: string) => void;
   compact: boolean;
+  readOnly: boolean;
 }) {
   const config = SWOT_CONFIG[quadrant];
   const Icon = QUADRANT_ICONS[quadrant];
@@ -110,15 +112,17 @@ function Quadrant({
             <span className="min-w-0 flex-1 whitespace-pre-wrap wrap-break-word text-[13px] font-semibold leading-snug text-ink">
               {item.text}
             </span>
-            <button
-              type="button"
-              onClick={() => remove(item.id)}
-              disabled={pending}
-              aria-label="Remover item"
-              className="mt-0.5 shrink-0 rounded-md p-0.5 text-muted opacity-60 transition hover:bg-white hover:text-red-500 group-hover:opacity-100"
-            >
-              <X size={13} strokeWidth={2.6} />
-            </button>
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => remove(item.id)}
+                disabled={pending}
+                aria-label="Remover item"
+                className="mt-0.5 shrink-0 rounded-md p-0.5 text-muted opacity-60 transition hover:bg-white hover:text-red-500 group-hover:opacity-100"
+              >
+                <X size={13} strokeWidth={2.6} />
+              </button>
+            )}
           </li>
         ))}
       </ul>
@@ -127,49 +131,55 @@ function Quadrant({
         <p className="mt-1.5 text-[11px] font-bold text-red-500">{error}</p>
       )}
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          add();
-        }}
-        className="mt-2 flex gap-1.5"
-      >
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Adicionar item..."
-          className="min-w-0 flex-1 rounded-lg border border-line bg-panel px-2.5 py-1.5 text-[13px] font-semibold text-ink outline-none transition placeholder:text-muted focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/30"
-        />
-        <button
-          type="submit"
-          disabled={pending || !text.trim()}
-          aria-label={`Adicionar em ${config.label}`}
-          className="grid size-8 shrink-0 place-items-center rounded-lg text-white transition hover:brightness-105 disabled:opacity-40"
-          style={{ backgroundColor: config.color }}
+      {!readOnly && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            add();
+          }}
+          className="mt-2 flex gap-1.5"
         >
-          {pending ? (
-            <Loader2 size={14} className="animate-spin" />
-          ) : (
-            <Plus size={15} strokeWidth={2.8} />
-          )}
-        </button>
-      </form>
+          <input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Adicionar item..."
+            className="min-w-0 flex-1 rounded-lg border border-line bg-panel px-2.5 py-1.5 text-[13px] font-semibold text-ink outline-none transition placeholder:text-muted focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/30"
+          />
+          <button
+            type="submit"
+            disabled={pending || !text.trim()}
+            aria-label={`Adicionar em ${config.label}`}
+            className="grid size-8 shrink-0 place-items-center rounded-lg text-white transition hover:brightness-105 disabled:opacity-40"
+            style={{ backgroundColor: config.color }}
+          >
+            {pending ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Plus size={15} strokeWidth={2.8} />
+            )}
+          </button>
+        </form>
+      )}
     </section>
   );
 }
 
 /**
  * Grade SWOT 2×2 (1 coluna no mobile). Usada na página Planejamento
- * (applicationId=null) e na aba SWOT do modal da vaga.
+ * (applicationId=null), na aba SWOT do modal da vaga e, com `readOnly`,
+ * na visão da vaga.
  */
 export function SwotGrid({
   applicationId,
   initialItems,
   compact = false,
+  readOnly = false,
 }: {
   applicationId: string | null;
   initialItems: SwotItemDTO[];
   compact?: boolean;
+  /** Só exibe os itens: sem remover nem adicionar. */
+  readOnly?: boolean;
 }) {
   const [items, setItems] = useState<SwotItemDTO[]>(initialItems);
 
@@ -195,6 +205,7 @@ export function SwotGrid({
             setItems((prev) => prev.filter((item) => item.id !== id))
           }
           compact={compact}
+          readOnly={readOnly}
         />
       ))}
     </div>
