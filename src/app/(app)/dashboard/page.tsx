@@ -102,6 +102,11 @@ export default async function DashboardPage() {
         />
       </div>
 
+      <p className="-mt-1 text-[11px] font-semibold text-muted">
+        Os indicadores acima, a meta da semana e as próximas ações consideram
+        apenas vagas não arquivadas.
+      </p>
+
       <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
         <WeeklyGoalCard
           goal={data.metaSemana.goal}
@@ -163,6 +168,9 @@ export default async function DashboardPage() {
 
         <Card title="Aplicações por mês">
           <MonthlyChart data={data.porMes} />
+          <p className="mt-3 text-[11px] font-semibold text-muted">
+            Inclui vagas arquivadas.
+          </p>
         </Card>
 
         <Card title="Funil de conversão">
@@ -175,7 +183,8 @@ export default async function DashboardPage() {
             }))}
           />
           <p className="mt-3 text-[11px] font-semibold text-muted">
-            Quantas aplicações chegaram a cada etapa, com base no histórico.
+            Quantas vagas chegaram a cada etapa, com base no histórico.
+            Inclui arquivadas.
           </p>
         </Card>
 
@@ -188,6 +197,9 @@ export default async function DashboardPage() {
               color: "#e34948",
             }))}
           />
+          <p className="mt-3 text-[11px] font-semibold text-muted">
+            Inclui vagas arquivadas.
+          </p>
         </Card>
 
         <Card title="Tempo médio por etapa">
@@ -201,7 +213,8 @@ export default async function DashboardPage() {
             }))}
           />
           <p className="mt-3 text-[11px] font-semibold text-muted">
-            Média de dias que as vagas passam em cada etapa.
+            Média de dias que as vagas passam em cada etapa. Inclui
+            arquivadas.
           </p>
         </Card>
 

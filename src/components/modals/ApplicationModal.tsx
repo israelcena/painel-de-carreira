@@ -138,7 +138,7 @@ function DetailsTab({
   const remove = () => {
     if (
       !window.confirm(
-        "Excluir permanentemente esta vaga e todo o seu histórico? Essa ação não pode ser desfeita.\n\nDica: use Arquivar para tirá-la do quadro mantendo as métricas."
+        "Excluir permanentemente esta vaga e todo o seu histórico? Essa ação não pode ser desfeita.\n\nDica: use Arquivar para tirá-la do quadro sem perder o histórico."
       )
     )
       return;
@@ -374,7 +374,7 @@ function DetailsTab({
           type="button"
           onClick={archive}
           disabled={pending}
-          title="Remove do quadro mantendo as métricas"
+          title="Remove do quadro sem perder o histórico"
           className="flex items-center gap-1.5 rounded-xl border border-line bg-white px-3 py-2.5 text-sm font-extrabold text-ink-soft transition hover:bg-panel disabled:opacity-60"
         >
           <Archive size={15} /> Arquivar

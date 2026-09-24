@@ -34,7 +34,15 @@ function FormBody({
   const [priority, setPriority] = useState<Priority>("MEDIA");
   const [countryCode, setCountryCode] = useState(defaultCountryCode);
   const [platform, setPlatform] = useState("");
-  const [appliedAt, setAppliedAt] = useState(dateToInput(new Date()));
+  const aplicadoOrder =
+    selectableStages.find((s) => s.key === "aplicado")?.order ?? 2;
+  const isApplied = (id: string) =>
+    (selectableStages.find((s) => s.id === id)?.order ?? 0) >= aplicadoOrder;
+
+  // Interesse ainda não é candidatura: a data só vem preenchida de
+  // "Aplicado" em diante, senão o interesse entra na meta da semana.
+  const today = dateToInput(new Date());
+  const [appliedAt, setAppliedAt] = useState(isApplied(stageId) ? today : "");
   const [workModel, setWorkModel] = useState<WorkModel | "">("");
   const [locationCity, setLocationCity] = useState("");
   const [salary, setSalary] = useState("");
@@ -44,6 +52,14 @@ function FormBody({
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  // Acompanha a etapa enquanto a data não foi mexida à mão.
+  const changeStage = (next: string) => {
+    setStageId(next);
+    if (appliedAt === "" || appliedAt === today) {
+      setAppliedAt(isApplied(next) ? today : "");
+    }
+  };
 
   const submit = () => {
     setError(null);
@@ -115,7 +131,7 @@ function FormBody({
           <select
             id="nv-stage"
             value={stageId}
-            onChange={(e) => setStageId(e.target.value)}
+            onChange={(e) => changeStage(e.target.value)}
             className={inputCls}
           >
             {selectableStages.map((stage) => (
