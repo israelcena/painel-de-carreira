@@ -3,14 +3,53 @@
 import { Download, FileText, Loader2, Trash2, Upload } from "lucide-react";
 import { useRef, useState, useTransition } from "react";
 import { deleteDocument, uploadDocument } from "@/app/actions/documents";
-import { formatDate } from "@/lib/format";
+import {
+  DOCUMENT_EXTENSIONS,
+  DOCUMENT_MAX_BYTES,
+  DOCUMENT_TOO_LARGE,
+} from "@/lib/domain";
+import { formatBytes, formatDate } from "@/lib/format";
 import type { DocumentDTO } from "@/lib/types";
-import { ErrorBox, Field, inputCls } from "@/components/ui/fields";
+import {
+  ErrorBox,
+  Field,
+  fileInputCls,
+  inputCls,
+} from "@/components/ui/fields";
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+function plural(count: number, singular: string, pluralForm: string) {
+  return `${count} ${count === 1 ? singular : pluralForm}`;
+}
+
+/** "Nubank, iFood (arquivada)" — cargo só quando a mesma empresa se repete. */
+function usageLabel(usedIn: DocumentDTO["usedIn"]): string {
+  const perCompany = new Map<string, number>();
+  for (const app of usedIn) {
+    perCompany.set(app.company, (perCompany.get(app.company) ?? 0) + 1);
+  }
+  const labels = usedIn.map((app) => {
+    const details = [
+      (perCompany.get(app.company) ?? 0) > 1 ? app.roleTitle : null,
+      app.archived ? "arquivada" : null,
+    ].filter(Boolean);
+    return details.length > 0
+      ? `${app.company} (${details.join(", ")})`
+      : app.company;
+  });
+  return [...new Set(labels)].join(", ");
+}
+
+function deleteMessage(doc: DocumentDTO): string {
+  const base = `Excluir "${doc.name}" (${doc.fileName})?`;
+  const linked = doc.usedIn.length;
+  if (linked === 0) return base;
+  const archived = doc.usedIn.filter((app) => app.archived).length;
+  const archivedPart = archived
+    ? ` (${plural(archived, "arquivada", "arquivadas")})`
+    : "";
+  return `${base}\n\nVinculado a ${plural(linked, "vaga", "vagas")}${archivedPart}; ${
+    linked === 1 ? "ela ficará" : "elas ficarão"
+  } sem currículo.`;
 }
 
 export function ResumeSection({ documents }: { documents: DocumentDTO[] }) {
@@ -21,18 +60,32 @@ export function ResumeSection({ documents }: { documents: DocumentDTO[] }) {
   const submit = (form: HTMLFormElement) => {
     setError(null);
     const formData = new FormData(form);
+    const file = formData.get("file");
+    // Acima do limite a action nem chega a rodar: a promise rejeita
+    if (file instanceof File && file.size > DOCUMENT_MAX_BYTES) {
+      setError(DOCUMENT_TOO_LARGE);
+      return;
+    }
     startTransition(async () => {
-      const result = await uploadDocument(formData);
-      if (result.ok) formRef.current?.reset();
-      else setError(result.error);
+      try {
+        const result = await uploadDocument(formData);
+        if (result.ok) formRef.current?.reset();
+        else setError(result.error);
+      } catch {
+        setError("Erro ao enviar o arquivo.");
+      }
     });
   };
 
   const remove = (doc: DocumentDTO) => {
-    if (!window.confirm(`Excluir "${doc.name}" (${doc.fileName})?`)) return;
+    if (!window.confirm(deleteMessage(doc))) return;
     startTransition(async () => {
-      const result = await deleteDocument(doc.id);
-      if (!result.ok) setError(result.error);
+      try {
+        const result = await deleteDocument(doc.id);
+        if (!result.ok) setError(result.error);
+      } catch {
+        setError("Erro ao excluir o arquivo.");
+      }
     });
   };
 
@@ -64,8 +117,8 @@ export function ResumeSection({ documents }: { documents: DocumentDTO[] }) {
             name="file"
             type="file"
             required
-            accept=".pdf,.doc,.docx,.odt,.rtf,.txt,.md"
-            className="w-full text-sm font-semibold text-ink-soft file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand/10 file:px-3 file:py-2 file:text-sm file:font-extrabold file:text-brand hover:file:bg-brand/20"
+            accept={DOCUMENT_EXTENSIONS.join(",")}
+            className={fileInputCls}
           />
         </Field>
         <button
@@ -103,6 +156,14 @@ export function ResumeSection({ documents }: { documents: DocumentDTO[] }) {
                   {doc.fileName} · {formatBytes(doc.size)} ·{" "}
                   {formatDate(doc.createdAt)}
                 </p>
+                {doc.usedIn.length > 0 && (
+                  <p
+                    className="truncate text-xs font-bold text-brand"
+                    title={usageLabel(doc.usedIn)}
+                  >
+                    Usado em: {usageLabel(doc.usedIn)}
+                  </p>
+                )}
               </div>
               <a
                 href={`/api/documentos/${doc.id}`}

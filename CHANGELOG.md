@@ -24,6 +24,16 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ### Adicionado
 
+- **Currículo em cada vaga.** Nova aba **Currículo** no modal da vaga: vincule uma versão já salva
+  em Documentos ou envie um arquivo novo (ex.: CV adaptado para a vaga), que entra na biblioteca e
+  já fica vinculado. Um currículo por vaga; trocar substitui o vínculo e "Remover vínculo" mantém o
+  arquivo em Documentos.
+- **Download do currículo pelo card**: ícone no rodapé do card baixa o arquivo vinculado sem abrir
+  o modal nem iniciar o arraste.
+- **"Usado em" em Documentos**: cada currículo lista as vagas que o usam (arquivadas marcadas), e a
+  confirmação de exclusão avisa quantas vagas ficarão sem currículo.
+- **Histórico registra o currículo**: "Currículo vinculado: …" e "Currículo desvinculado: …",
+  inclusive quando o documento é excluído em Documentos.
 - **Vagas novas entram no topo da raia** ao criar, ao rejeitar (topo de Rejeitado) e ao usar
   "Mover para etapa" no modal. O arraste manual continua livre.
 - **Ordenar por mais recentes**, por raia e para o quadro inteiro, pela data de entrada na etapa.
@@ -41,6 +51,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ### Corrigido
 
+- Rodapé do card quebra linha quando todos os indicadores aparecem, em vez de sair da borda nas
+  raias estreitas de telas largas.
+- Upload de currículo acima do limite (ou com falha de rede) mostra erro no formulário em vez de
+  derrubar a página.
 - Aviso de hidratação do dnd-kit (`aria-describedby` divergente entre servidor e cliente) com um
   `id` estável no `DndContext`.
 - Popover de filtros: reposiciona ao redimensionar, rolar ou quando a toolbar muda de linha;
@@ -60,7 +74,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ### Migração de banco
 
-Duas migrations, aplicadas em sequência pelo `prisma migrate deploy` do build (Vercel) e da
+Três migrations, aplicadas em sequência pelo `prisma migrate deploy` do build (Vercel) e da
 inicialização do container (Docker):
 
 1. `20260915150000_remove_section_country_required` — `countryCode = 'BR'` em toda vaga da seção
@@ -70,6 +84,9 @@ inicialização do container (Docker):
    (`ROW_NUMBER() OVER (PARTITION BY "stageId" ORDER BY position, "createdAt")`), porque os dois
    quadros antigos tinham sequências independentes e a união gerava empates. Preserva a ordem
    manual; nenhum passo pós-deploy é necessário.
+3. `20260923120000_application_resume` — coluna opcional `applications.resumeId` com índice e FK
+   para `documents` (`ON DELETE SET NULL`). Aditiva: o deploy antigo continua funcionando enquanto o
+   novo é promovido.
 
 A primeira remove uma coluna e é irreversível: faça um snapshot ou branch no Neon antes do deploy.
 

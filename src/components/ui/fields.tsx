@@ -1,6 +1,9 @@
 export const inputCls =
   "w-full rounded-xl border border-line bg-panel px-3 py-2 text-sm font-semibold text-ink outline-none transition placeholder:text-muted focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/30 disabled:opacity-60";
 
+export const fileInputCls =
+  "w-full text-sm font-semibold text-ink-soft file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand/10 file:px-3 file:py-2 file:text-sm file:font-extrabold file:text-brand hover:file:bg-brand/20";
+
 export function Field({
   label,
   htmlFor,

@@ -22,6 +22,12 @@ export function formatMonth(date: Date): string {
   return monthFmt.format(date).replace(".", "");
 }
 
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export function daysSince(date: Date | string): number {
   const ms = Date.now() - new Date(date).getTime();
   return Math.max(0, Math.floor(ms / 86_400_000));

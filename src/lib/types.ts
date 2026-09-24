@@ -64,6 +64,15 @@ export interface AppCard {
   createdAt: Date;
   noteCount: number;
   stageEnteredAt: Date;
+  /** Currículo enviado para a vaga (versão da biblioteca de Documentos). */
+  resume: ResumeRef | null;
+}
+
+/** Referência a um documento da biblioteca, sem os bytes. */
+export interface ResumeRef {
+  id: string;
+  name: string;
+  fileName: string;
 }
 
 export type SwotQuadrant = "FORCA" | "FRAQUEZA" | "OPORTUNIDADE" | "AMEACA";
@@ -83,6 +92,13 @@ export interface DocumentDTO {
   mimeType: string;
   size: number;
   createdAt: Date;
+  /** Vagas que usam este documento como currículo (inclui arquivadas). */
+  usedIn: {
+    id: string;
+    company: string;
+    roleTitle: string;
+    archived: boolean;
+  }[];
 }
 
 export interface TextDocDTO {

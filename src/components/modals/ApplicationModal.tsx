@@ -4,20 +4,33 @@ import {
   Archive,
   CalendarX2,
   CornerUpLeft,
+  Download,
+  FileUser,
   Loader2,
   Trash2,
+  Unlink,
+  Upload,
 } from "lucide-react";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   addNote,
   archiveApplication,
   deleteApplication,
   getApplicationEvents,
   updateApplication,
+  type ActionResult,
 } from "@/app/actions/applications";
+import {
+  listDocuments,
+  setApplicationResume,
+  uploadApplicationResume,
+} from "@/app/actions/documents";
 import { getSwotItems } from "@/app/actions/swot";
 import { SwotGrid } from "@/components/swot/SwotGrid";
 import {
+  DOCUMENT_EXTENSIONS,
+  DOCUMENT_MAX_BYTES,
+  DOCUMENT_TOO_LARGE,
   PLATFORM_SUGGESTIONS,
   PRIORITY_LABELS,
   PRIORITY_ORDER,
@@ -33,6 +46,7 @@ import {
 } from "@/lib/format";
 import type {
   AppCard,
+  DocumentDTO,
   EventDTO,
   Priority,
   StageDTO,
@@ -40,7 +54,12 @@ import type {
   WorkModel,
 } from "@/lib/types";
 import { CountrySelect } from "@/components/ui/CountrySelect";
-import { ErrorBox, Field, inputCls } from "@/components/ui/fields";
+import {
+  ErrorBox,
+  Field,
+  fileInputCls,
+  inputCls,
+} from "@/components/ui/fields";
 import { Flag } from "@/components/ui/Flag";
 import { Modal } from "@/components/ui/Modal";
 import { PriorityPill } from "@/components/ui/PriorityPill";
@@ -434,6 +453,258 @@ function DescriptionTab({ app }: { app: AppCard }) {
   );
 }
 
+/** Biblioteca para o select da aba Currículo; `null` quando a chamada rejeita. */
+const fetchDocuments = () => listDocuments().catch(() => null);
+
+function ResumeTab({ app }: { app: AppCard }) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const [documents, setDocuments] = useState<DocumentDTO[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [selected, setSelected] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  const showDocuments = (result: ActionResult<DocumentDTO[]> | null) => {
+    if (result?.ok) {
+      setDocuments(result.data ?? []);
+      setLoadError(null);
+    } else {
+      setLoadError(result?.error ?? "Erro ao carregar os currículos.");
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchDocuments().then((result) => {
+      if (cancelled) return;
+      if (result?.ok) setDocuments(result.data ?? []);
+      else setLoadError(result?.error ?? "Erro ao carregar os currículos.");
+    });
+    return () => {
+      cancelled = true;
+      if (savedTimer.current) clearTimeout(savedTimer.current);
+    };
+  }, []);
+
+  // `app.resume` chega atualizado pelo Board quando o servidor revalida; aqui
+  // só se recarrega a biblioteca (versões novas e "(atual)").
+  const run = (
+    action: () => Promise<ActionResult>,
+    fallback: string,
+    onSuccess?: () => void
+  ) => {
+    setError(null);
+    setSaved(false);
+    startTransition(async () => {
+      try {
+        const result = await action();
+        if (!result.ok) {
+          setError(result.error);
+          return;
+        }
+      } catch {
+        // Ex.: arquivo acima do limite de corpo da action — a promise rejeita
+        setError(fallback);
+        return;
+      }
+      const docs = await fetchDocuments();
+      // Depois de um await, só o que estiver em startTransition entra no mesmo
+      // commit do quadro revalidado; fora dele o "Vinculado ✓" apareceria antes
+      // do currículo novo.
+      startTransition(() => {
+        showDocuments(docs);
+        onSuccess?.();
+      });
+    });
+  };
+
+  const flashSaved = () => {
+    setSaved(true);
+    if (savedTimer.current) clearTimeout(savedTimer.current);
+    savedTimer.current = setTimeout(() => setSaved(false), 2500);
+  };
+
+  const linkSaved = () =>
+    run(
+      () => setApplicationResume(app.id, selected),
+      "Erro ao vincular o currículo.",
+      () => {
+        setSelected("");
+        flashSaved();
+      }
+    );
+
+  const unlink = () =>
+    run(
+      () => setApplicationResume(app.id, null),
+      "Erro ao remover o vínculo."
+    );
+
+  const upload = (form: HTMLFormElement) => {
+    const formData = new FormData(form);
+    const file = formData.get("file");
+    if (file instanceof File && file.size > DOCUMENT_MAX_BYTES) {
+      setSaved(false);
+      setError(DOCUMENT_TOO_LARGE);
+      return;
+    }
+    run(
+      () => uploadApplicationResume(app.id, formData),
+      "Erro ao enviar o currículo.",
+      () => {
+        formRef.current?.reset();
+        flashSaved();
+      }
+    );
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-muted">
+            Currículo enviado para esta vaga
+          </p>
+          {saved && (
+            <span className="text-xs font-extrabold text-emerald-600">
+              Vinculado ✓
+            </span>
+          )}
+        </div>
+        {app.resume ? (
+          <div className="flex items-center gap-3 rounded-xl border border-line p-3">
+            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand/10 text-brand">
+              <FileUser size={17} strokeWidth={2.2} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-extrabold text-ink">
+                {app.resume.name}
+              </p>
+              <p className="truncate text-xs font-semibold text-muted">
+                {app.resume.fileName}
+              </p>
+            </div>
+            <a
+              href={`/api/documentos/${app.resume.id}`}
+              download={app.resume.fileName}
+              title="Baixar"
+              className="flex items-center gap-1.5 rounded-lg bg-panel px-3 py-1.5 text-xs font-extrabold text-ink-soft transition hover:bg-brand/10 hover:text-brand"
+            >
+              <Download size={13} strokeWidth={2.5} /> Baixar
+            </a>
+            <button
+              type="button"
+              onClick={unlink}
+              disabled={pending}
+              title="Remover vínculo (o arquivo continua em Documentos)"
+              aria-label="Remover vínculo"
+              className="rounded-lg p-2 text-muted transition hover:bg-red-50 hover:text-red-500 disabled:opacity-60"
+            >
+              <Unlink size={15} />
+            </button>
+          </div>
+        ) : (
+          <p className="rounded-xl border border-dashed border-line px-3 py-4 text-center text-sm font-semibold text-muted">
+            Nenhum currículo vinculado a esta vaga.
+          </p>
+        )}
+      </div>
+
+      <div className="rounded-xl bg-panel p-3">
+        <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-muted">
+          <label htmlFor="resume-saved">Usar uma versão salva</label>
+        </p>
+        {loadError ? (
+          <ErrorBox message={loadError} />
+        ) : documents === null ? (
+          <p className="py-2 text-sm font-semibold text-muted">
+            Carregando versões...
+          </p>
+        ) : documents.length === 0 ? (
+          <p className="py-2 text-sm font-semibold text-muted">
+            Nenhuma versão salva em Documentos ainda — envie um arquivo abaixo.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <select
+              id="resume-saved"
+              value={selected}
+              onChange={(e) => setSelected(e.target.value)}
+              className={`${inputCls} bg-white`}
+            >
+              <option value="">Escolha uma versão…</option>
+              {documents.map((doc) => (
+                <option key={doc.id} value={doc.id}>
+                  {doc.name} · {doc.fileName}
+                  {doc.id === app.resume?.id ? " (atual)" : ""}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={linkSaved}
+              disabled={pending || !selected || selected === app.resume?.id}
+              className="shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-extrabold text-white transition hover:brightness-105 disabled:opacity-50"
+            >
+              Usar esta versão
+            </button>
+          </div>
+        )}
+      </div>
+
+      <form
+        ref={formRef}
+        onSubmit={(e) => {
+          e.preventDefault();
+          upload(e.currentTarget);
+        }}
+        className="grid gap-3 rounded-xl bg-panel p-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+      >
+        <p className="-mb-1 text-[11px] font-bold uppercase tracking-wide text-muted sm:col-span-3">
+          Ou enviar um arquivo novo
+        </p>
+        <Field label="Nome da versão" htmlFor="resume-name">
+          <input
+            id="resume-name"
+            name="name"
+            placeholder={`CV — ${app.company}`}
+            className={`${inputCls} bg-white`}
+          />
+        </Field>
+        <Field label="Arquivo (máx. 8 MB)" htmlFor="resume-file">
+          <input
+            id="resume-file"
+            name="file"
+            type="file"
+            required
+            accept={DOCUMENT_EXTENSIONS.join(",")}
+            className={fileInputCls}
+          />
+        </Field>
+        <button
+          type="submit"
+          disabled={pending}
+          className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-violet to-brand-blue px-4 py-2.5 text-sm font-extrabold text-white shadow-card transition hover:brightness-105 disabled:opacity-60"
+        >
+          {pending ? (
+            <Loader2 size={15} className="animate-spin" />
+          ) : (
+            <Upload size={15} strokeWidth={2.5} />
+          )}
+          Enviar
+        </button>
+        <p className="text-xs font-semibold text-muted sm:col-span-3">
+          O arquivo novo também fica salvo em Documentos.
+        </p>
+      </form>
+
+      <ErrorBox message={error} />
+    </div>
+  );
+}
+
 function SwotTab({ app }: { app: AppCard }) {
   const [items, setItems] = useState<SwotItemDTO[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -587,7 +858,7 @@ export function ApplicationModal({
   onMove: (app: AppCard, toStageId: string) => void;
 }) {
   const [tab, setTab] = useState<
-    "detalhes" | "descricao" | "swot" | "historico"
+    "detalhes" | "descricao" | "curriculo" | "swot" | "historico"
   >("detalhes");
   const stageNameById = useMemo(
     () => Object.fromEntries(stages.map((s) => [s.id, s.name])),
@@ -631,6 +902,7 @@ export function ApplicationModal({
           [
             ["detalhes", "Detalhes"],
             ["descricao", "Descrição"],
+            ["curriculo", "Currículo"],
             ["swot", "SWOT"],
             ["historico", "Histórico"],
           ] as const
@@ -660,6 +932,7 @@ export function ApplicationModal({
         />
       )}
       {tab === "descricao" && <DescriptionTab key={app.id} app={app} />}
+      {tab === "curriculo" && <ResumeTab key={app.id} app={app} />}
       {tab === "swot" && <SwotTab app={app} />}
       {tab === "historico" && (
         <HistoryTab app={app} stageNameById={stageNameById} />
