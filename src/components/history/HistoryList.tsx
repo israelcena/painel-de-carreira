@@ -77,6 +77,10 @@ export function HistoryList({
       return false;
     return true;
   });
+  const canUnarchive = (event: HistoryEvent) =>
+    event.type === "ARCHIVED" && event.application.archived;
+  // No xl as linhas viram colunas; se alguma tiver o botão, todas reservam o espaço
+  const reserveButtonSlot = filtered.some(canUnarchive);
 
   return (
     <div>
@@ -87,7 +91,7 @@ export function HistoryList({
         <select
           value={origem}
           onChange={(e) => setOrigem(e.target.value as "" | Origin)}
-          className={`${inputCls} w-auto`}
+          className={`${inputCls} sm:w-auto`}
           aria-label="Filtrar por origem"
         >
           <option value="">Brasil e exterior</option>
@@ -100,7 +104,7 @@ export function HistoryList({
         <select
           value={tipo}
           onChange={(e) => setTipo(e.target.value)}
-          className={`${inputCls} w-auto`}
+          className={`${inputCls} sm:w-auto`}
           aria-label="Filtrar por tipo de evento"
         >
           <option value="">Todos os eventos</option>
@@ -134,8 +138,9 @@ export function HistoryList({
                   backgroundColor: EVENT_COLORS[event.type] ?? "#8a92b2",
                 }}
               />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-extrabold leading-snug text-ink">
+              {/* Em telas largas cada evento vira uma linha: vaga · evento · data */}
+              <div className="min-w-0 flex-1 xl:grid xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)_20rem] xl:items-baseline xl:gap-x-6">
+                <p className="text-sm font-extrabold leading-snug wrap-break-word text-ink">
                   {event.application.company}
                   <span className="font-semibold text-ink-soft">
                     {" "}
@@ -148,20 +153,35 @@ export function HistoryList({
                     />
                   )}
                 </p>
-                <p className="text-xs font-semibold leading-snug text-ink-soft">
+                <p className="text-xs font-semibold leading-snug wrap-break-word text-ink-soft">
                   {describeEvent(event, stageNameById)}
                 </p>
                 <p
-                  className="mt-0.5 text-[11px] font-bold text-muted"
+                  className="mt-0.5 text-[11px] font-bold text-muted xl:mt-0 xl:text-right"
                   title={formatDateTime(event.createdAt)}
                 >
-                  {formatDateTime(event.createdAt)} ·{" "}
-                  {relativeTime(event.createdAt)} ·{" "}
-                  {countryName(event.application.countryCode)}
+                  {/* No xl só quebra nos separadores, nunca no meio do nome do país */}
+                  <span className="xl:whitespace-nowrap">
+                    {formatDateTime(event.createdAt)}
+                  </span>{" "}
+                  ·{" "}
+                  <span className="xl:whitespace-nowrap">
+                    {relativeTime(event.createdAt)}
+                  </span>{" "}
+                  ·{" "}
+                  <span className="xl:whitespace-nowrap">
+                    {countryName(event.application.countryCode)}
+                  </span>
                 </p>
               </div>
-              {event.type === "ARCHIVED" && event.application.archived && (
-                <UnarchiveButton id={event.application.id} />
+              {canUnarchive(event) ? (
+                <div className="flex shrink-0 justify-end xl:w-28">
+                  <UnarchiveButton id={event.application.id} />
+                </div>
+              ) : (
+                reserveButtonSlot && (
+                  <span aria-hidden className="hidden shrink-0 xl:block xl:w-28" />
+                )
               )}
             </li>
           ))}

@@ -17,7 +17,9 @@ export default async function AppLayout({
       <Topbar user={session.user ?? "?"} />
       <div className="flex min-h-0 flex-1">
         <Sidebar />
-        <main className="min-w-0 flex-1 pb-20 md:pb-0">{children}</main>
+        {/* overflow-x-clip: se algum conteúdo estourar a largura, ele é cortado aqui
+            em vez de alargar a página e deslocar o menu fixo do mobile */}
+        <main className="min-w-0 flex-1 overflow-x-clip pb-20 md:pb-0">{children}</main>
       </div>
       <MobileNav />
     </div>

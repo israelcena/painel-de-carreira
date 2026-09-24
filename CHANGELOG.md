@@ -48,9 +48,20 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
   (`ConfirmDialog`, construído sobre o `Modal`; o foco inicial fica em "Cancelar").
 - Arraste desativado enquanto busca, país ou data estiverem ativos (a origem não desativa). Um
   filtro de raia desativa o arraste só dentro daquela raia.
+- **Telas grandes aproveitam a largura.** Histórico, Documentos e Planejamento vão até 1800px, como
+  o Dashboard (antes 1024px). No Histórico, a partir de 1280px cada evento vira uma linha em colunas
+  alinhadas (vaga · evento · data). Em Documentos, a partir de 1920px (novo breakpoint `3xl`),
+  Currículos e Pitch ficam lado a lado. O modal da vaga cresce para 768px (1280px+) e 896px (1536px+).
 
 ### Corrigido
 
+- **Dashboard no mobile:** tocar em Dashboard deixava a página mais larga que a tela, o navegador
+  afastava o zoom e o menu de baixo esticava junto. A grade de cards não tinha colunas definidas
+  abaixo de 1024px, e textos de uma linha (empresa/cargo, notas) alargavam a coluna. Mesma correção
+  nas grades do SWOT e dos rascunhos, quebra de linha para textos longos sem espaço (URLs em notas) e
+  `overflow-x-clip` no conteúdo, para que nenhum estouro futuro desloque o menu fixo.
+- Filtros do Histórico ficam na linha do título, com largura automática (o `w-full` do campo
+  vencia o `w-auto` e cada select ocupava a linha inteira).
 - Rodapé do card quebra linha quando todos os indicadores aparecem, em vez de sair da borda nas
   raias estreitas de telas largas.
 - Upload de currículo acima do limite (ou com falha de rede) mostra erro no formulário em vez de
