@@ -172,7 +172,8 @@ function DetailsTab({
         </button>
       </RejectionBanner>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      {/* Uma grade só: os pares ficam lado a lado e, no modal largo, em 4 colunas */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 3xl:grid-cols-4">
         <Field label="Empresa" htmlFor="ed-company" required>
           <input
             id="ed-company"
@@ -191,9 +192,7 @@ function DetailsTab({
             className={inputCls}
           />
         </Field>
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
         <Field label="País" htmlFor="ed-country" required>
           <CountrySelect
             id="ed-country"
@@ -218,9 +217,7 @@ function DetailsTab({
             ))}
           </select>
         </Field>
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Prioridade" htmlFor="ed-priority">
           <select
             id="ed-priority"
@@ -244,9 +241,7 @@ function DetailsTab({
             className={inputCls}
           />
         </Field>
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Plataforma" htmlFor="ed-platform">
           <input
             id="ed-platform"
@@ -276,9 +271,7 @@ function DetailsTab({
             ))}
           </select>
         </Field>
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Cidade" htmlFor="ed-city">
           <input
             id="ed-city"
@@ -295,9 +288,7 @@ function DetailsTab({
             className={inputCls}
           />
         </Field>
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Link da vaga" htmlFor="ed-url">
           <input
             id="ed-url"
@@ -318,9 +309,7 @@ function DetailsTab({
             className={inputCls}
           />
         </Field>
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Próxima ação" htmlFor="ed-next-note">
           <input
             id="ed-next-note"
@@ -855,7 +844,7 @@ export function ApplicationModal({
     <Modal
       open
       onClose={onClose}
-      wide
+      size="xl"
       title={
         <span className="flex items-center gap-2">
           {app.company}

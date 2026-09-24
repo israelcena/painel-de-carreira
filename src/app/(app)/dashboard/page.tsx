@@ -170,7 +170,8 @@ export default async function DashboardPage() {
         <Card title="Aplicações por mês">
           <MonthlyChart data={data.porMes} />
           <p className="mt-3 text-[11px] font-semibold text-muted">
-            Inclui vagas arquivadas.
+            Vagas que chegaram a Aplicado, pela data de aplicação (sem ela,
+            pela entrada em Aplicado). Interesse não conta. Inclui arquivadas.
           </p>
         </Card>
 

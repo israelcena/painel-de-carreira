@@ -72,12 +72,16 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 - **Telas grandes aproveitam a largura.** Histórico, Documentos e Planejamento vão até 1800px, como
   o Dashboard (antes 1024px). No Histórico, a partir de 1280px cada evento vira uma linha em colunas
   alinhadas (vaga · evento · data). Em Documentos, a lista de currículos fica em duas colunas a
-  partir de 1280px. O modal da vaga cresce para 768px (1280px+) e 896px (1536px+).
+  partir de 1280px. O modal da vaga acompanha a tela: 896px a partir de 1024px e, de 1280px em
+  diante, 75% da largura (até 1792px). Nova vaga e o visualizador de currículo seguem em 768px
+  (1280px+) e 896px (1536px+). No modal da vaga, a lateral de dados passa a 288px em 1536px+ e a
+  aba Detalhes mostra quatro campos por linha em 1920px+.
 - **Telas gigantes (1920px+, novo breakpoint `3xl`) usam a largura toda**, sem o limite de 1800px,
   com colunas adaptativas (o número de colunas acompanha a largura): cards do Dashboard e a lista de
   "Atividade recente", eventos do Histórico (em cartões), currículos e rascunhos em Documentos. O
   SWOT do Planejamento mostra os quatro quadrantes lado a lado e as colunas do Quadro deixam de
-  parar em 384px, preenchendo a tela.
+  parar em 384px, preenchendo a tela. Na visão da vaga, descrição e observações ficam numa coluna e
+  SWOT e histórico noutra, para as linhas de texto não passarem de ~100 caracteres.
 
 ### Corrigido
 
@@ -99,6 +103,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
   Aplicado ou posterior (antes vinha preenchida também em Interesse, gravando uma data de aplicação
   em vaga que ainda não foi aplicada). Enquanto a data não for editada à mão, ela acompanha a troca
   de etapa no formulário. Vale só para vagas novas.
+- **Interesse fora da meta da semana e de "Aplicações por mês".** Com a data de aplicação vazia,
+  os dois indicadores usavam a data de cadastro, então a vaga nova em Interesse continuava contando
+  mesmo sem a data pré-preenchida. Agora só conta a vaga que chegou a Aplicado ou além (a mesma
+  régua do funil), inclusive as antigas sem data de aplicação e as rejeitadas depois de aplicar. A
+  data usada é a de aplicação do card; vazia, vale o dia em que a vaga entrou em Aplicado pelo
+  histórico (caso de quem arrasta o card de Interesse para Aplicado) e, sem esse registro, a de
+  cadastro. Interesses antigos que ficaram com a data pré-preenchida também saem da conta enquanto
+  estiverem em Interesse. Os rodapés dos dois cards explicam a regra.
 - A lista de currículos em duas colunas (1280px+) e a "Atividade recente" em colunas (1920px+) não
   deixam mais uma linha divisória sobrando sob a última linha — visível sobretudo com um currículo
   só.
