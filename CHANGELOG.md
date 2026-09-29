@@ -147,6 +147,18 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 - `bun run lint` ignora `.claude/worktrees/**`. Os worktrees do Claude Code são checkouts de outras
   branches, e o lint os percorria junto, reportando milhares de problemas que não vinham do código
   da branch atual.
+- **Vercel previews no longer migrate the database.** `scripts/vercel-build.sh` runs `prisma migrate deploy`
+  and seed only in production, or in previews with `MIGRATE_ON_BUILD=1` (for when each preview has its own
+  Neon branch). Before, a pull request with a migration changed the production database as soon as its
+  preview was built.
+- **CI on every pull request** (GitHub Actions): migrations and seed against an empty Postgres, then lint,
+  typecheck, tests when present, and build.
+- `npm run typecheck` (`next typegen && tsc --noEmit`).
+- **Unattended agent workflow:** a scheduled agent picks `ready-for-agent` issues and opens pull requests
+  following `docs/agents/afk-runbook.md`; the cloud environment is prepared by `scripts/cloud-setup.sh`.
+  The skills it uses (implement, tdd, pr, code-review, domain-modeling) are now installed in the repo.
+- From now on, everything except UI text (code, commits, issues, pull requests, docs and new changelog
+  entries) is written in English.
 
 ### Migração de banco
 

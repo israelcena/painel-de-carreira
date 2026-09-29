@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: painel
+          POSTGRES_PASSWORD: painel
+          POSTGRES_DB: painel
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U painel -d painel"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      POSTGRES_PRISMA_URL: postgresql://painel:painel@localhost:5432/painel
+      POSTGRES_URL_NON_POOLING: postgresql://painel:painel@localhost:5432/painel
+      APP_USER: admin
+      APP_PASSWORD: admin123
+      SESSION_SECRET: ci-only-secret-that-is-at-least-32-characters-long
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: npx prisma generate
+      # Also proves every migration applies cleanly to an empty database.
+      - run: npx prisma migrate deploy
+      - run: node prisma/seed.mjs
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test --if-present
+      - run: npm run build

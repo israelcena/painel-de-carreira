@@ -83,7 +83,7 @@ vercel env add SESSION_SECRET production
 vercel deploy --prod
 ```
 
-O `vercel.json` roda `next build` e só então `prisma migrate deploy` + seed (idempotente): uma migration entra no banco apenas quando o deploy novo já está pronto, encurtando para segundos a janela em que o deploy antigo roda contra o schema novo. Os uploads de currículo ficam no próprio Postgres, então funcionam igualmente na Vercel e no Docker.
+O `vercel.json` chama `scripts/vercel-build.sh`, que roda `next build` e só então `prisma migrate deploy` + seed (idempotente): uma migration entra no banco apenas quando o deploy novo já está pronto, encurtando para segundos a janela em que o deploy antigo roda contra o schema novo. Migrations e seed rodam **só em produção**: nos previews, apenas se `MIGRATE_ON_BUILD=1` estiver definida no ambiente Preview — ative isso só depois que cada preview tiver seu próprio branch no Neon (opção de preview branches da integração Neon ↔ Vercel), senão o preview de um PR com migration alteraria o banco de produção. Os uploads de currículo ficam no próprio Postgres, então funcionam igualmente na Vercel e no Docker.
 
 ## Desenvolvimento local (sem Docker para o app)
 
