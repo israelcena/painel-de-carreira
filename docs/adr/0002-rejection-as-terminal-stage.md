@@ -1,0 +1,3 @@
+# Rejection is a terminal Stage, not a status field
+
+A Rejected Application sits in a special Stage (`isRejection`) that holds its reason, date and the Stage it was rejected from, instead of keeping its pipeline Stage plus a separate "rejected" status. This keeps the board to one dimension (every Application is in exactly one lane) and makes Rejected a place you move to and Restore from. The cost: the Stage it was rejected from must be stored separately (`rejectedFromStageId`), and metrics must skip the Rejected Stage when computing how far an Application got. Entering and leaving the Rejected Stage only goes through the reject and restore actions, never through a plain move.
