@@ -22,9 +22,9 @@ Five canonical labels with their default names (needs-triage, needs-info, ready-
 
 Single context: one `CONTEXT.md` and `docs/adr/` at the root. See `docs/agents/domain.md`.
 
-### Unattended agents
+### Implementing issues
 
-Unattended runs pick `ready-for-agent` issues and open pull requests following `docs/agents/afk-runbook.md`. The criteria for `ready-for-agent` are in `docs/agents/triage-labels.md`.
+To implement a `ready-for-agent` issue, follow `docs/agents/issue-runbook.md`. There is no unattended runner: the user starts and watches every session. The criteria for `ready-for-agent` are in `docs/agents/triage-labels.md`.
 
 ## Project rules
 
