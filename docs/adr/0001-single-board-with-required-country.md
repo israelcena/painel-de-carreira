@@ -1,0 +1,3 @@
+# Single board with a required country, not Nacional/Internacional sections
+
+Applications used to live in two sections, Nacional and Internacional, each with its own board, and only international ones had a country. We replaced the sections with one board and made the country required on every Application (old Nacional ones became `BR`); Brazil × Abroad (**Origin**) is now derived from the country. The section duplicated what the country already said, split the board and the metrics in two, and left domestic Applications without a country to group by. Don't reintroduce a section field: filter or group by Origin instead.
