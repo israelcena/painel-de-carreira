@@ -1,16 +1,16 @@
-# AFK runbook
+# Issue runbook
 
-The procedure an unattended agent follows to turn one `ready-for-agent` issue into a pull request. A scheduled Claude Code cloud routine runs it every 6 hours with the prompt `/implement following docs/agents/afk-runbook.md`. The environment is prepared by `scripts/cloud-setup.sh` (gh, bun, a local Postgres with migrations and seed).
+The procedure an agent follows to turn one `ready-for-agent` issue into a pull request. It runs in a session the user starts and watches, usually with `/implement following docs/agents/issue-runbook.md`. There is no unattended runner.
 
-One run handles **at most one issue**. The human reviews and merges every pull request: merging to `main` deploys to production.
+One session handles **one issue**. The user reviews and merges every pull request: merging to `main` deploys to production.
 
 ## 1. Pick
 
-List open `ready-for-agent` issues with no assignee (see [issue-tracker.md](./issue-tracker.md) for the `gh` commands). Drop any with an open blocker: `gh api repos/{owner}/{repo}/issues/<n> --jq .issue_dependencies_summary.blocked_by` greater than 0, or an open issue in a `Blocked by:` line. Take the oldest one left. If none is left, stop: do nothing else and write nothing.
+If the user named an issue, take it. Otherwise list open `ready-for-agent` issues with no assignee (see [issue-tracker.md](./issue-tracker.md) for the `gh` commands). Drop any with an open blocker: `gh api repos/{owner}/{repo}/issues/<n> --jq .issue_dependencies_summary.blocked_by` greater than 0, or an open issue in a `Blocked by:` line. Take the oldest one left. If none is left, say so and stop.
 
 ## 2. Claim
 
-Your first write: `gh issue edit <n> --add-assignee @me`. This keeps a later run from picking the same issue.
+Your first write: `gh issue edit <n> --add-assignee @me`. This keeps another session from picking the same issue.
 
 ## 3. Understand
 
@@ -27,7 +27,7 @@ Read the issue with its comments, `CONTEXT.md` and the ADRs in `docs/adr/` that 
 
 ## 5. Verify
 
-Run `npm run lint`, `npm run typecheck`, `npm run test --if-present` and `npm run build`. Then start the app (`npm run dev`, login from `.env`) and check the screen or behaviour you changed against the issue's acceptance criteria. Run `/code-review` against `main` and fix what it finds.
+Run `npm run lint`, `npm run typecheck`, `npm run test --if-present` and `npm run build`. If a database is available, start the app (`npm run dev`, login from `.env`) and check the screen or behaviour you changed against the issue's acceptance criteria. Run `/code-review` against `main` and fix what it finds.
 
 ## 6. Open the pull request
 
@@ -45,4 +45,4 @@ When the issue is unclear, larger than one pull request, would break a limit, or
 
 - Merge a pull request, push to `main` or force-push a branch you did not create.
 - Touch other issues beyond reading them.
-- Handle more than one issue per run.
+- Handle more than one issue per session unless the user asks.

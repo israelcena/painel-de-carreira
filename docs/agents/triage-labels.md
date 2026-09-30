@@ -6,7 +6,7 @@ The skills speak in terms of five canonical triage roles. This file maps those r
 | -------------------------- | -------------------- | ---------------------------------------- |
 | `needs-triage`             | `needs-triage`       | Maintainer needs to evaluate this issue  |
 | `needs-info`               | `needs-info`         | Waiting on reporter for more information |
-| `ready-for-agent`          | `ready-for-agent`    | Fully specified, ready for an AFK agent  |
+| `ready-for-agent`          | `ready-for-agent`    | Fully specified, ready for an agent      |
 | `ready-for-human`          | `ready-for-human`    | Requires human implementation            |
 | `wontfix`                  | `wontfix`            | Will not be actioned                     |
 
@@ -23,7 +23,7 @@ An issue gets `ready-for-agent` only when all of these hold. Otherwise it is `re
 - It does not touch authentication (`iron-session`, credentials), `vercel.json`, `Dockerfile` or `scripts/`, and adds no dependency unless the issue explicitly approves one.
 - It fits in one pull request. If it doesn't, break it into a Wayfinder map with child issues first.
 
-Agents pick these issues up unattended; see [afk-runbook.md](./afk-runbook.md).
+An agent implements these in a session you start; see [issue-runbook.md](./issue-runbook.md).
 
 ## Other labels
 
