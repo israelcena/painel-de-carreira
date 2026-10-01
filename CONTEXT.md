@@ -29,20 +29,28 @@ The last non-rejection Stage. There is no accepted or declined outcome yet: an A
 ## Rejection
 
 **Rejection**:
-The outcome of an Application that ended against the user: a reason, a date and the Stage it was rejected from. It is represented as the terminal Rejected Stage; only the current Rejection shows on the Application, every past one stays in the Application's history.
+The outcome of an Application that ended against the user: a reason, a date and the Stage it was rejected from. It is represented as the terminal Rejected Stage; only the current Rejection shows on the Application, every past one stays in the Application's history. Correcting the current Rejection (its reason, date or details) is an edit in the history, not a new Rejection: the Application keeps its entry into the Rejected Stage.
 _Avoid_: Failure, Refusal
 
 **Restore**:
-Moving a Rejected Application back to a non-rejection Stage, clearing its current Rejection.
+Moving a Rejected Application back to a non-rejection Stage, clearing its current Rejection. Restoring restarts the count toward the Idle limit.
 _Avoid_: Reopen, Unreject
 
+**Automatic rejection**:
+A Rejection the app records by itself for an Application that has reached the Idle limit, in any non-rejection Stage. Its reason is "no reply", or "other" when it was in the first or the last non-rejection Stage (Interest or Offer), and it is dated when the Idle limit was reached, not when the app noticed it.
+_Avoid_: Auto-archive, Expiry
+
+**Idle limit**:
+The number of days an Application that is not Archived may stay without moving before it gets an Automatic rejection: one value for every Stage, 10 by default, from 1 to 90, and it can be switched off. The count starts at the latest of entering the current Stage, the Next action date and unarchiving.
+_Avoid_: Timeout, SLA
+
 **Response rate**:
-Of the Applied Applications, the share that reached Contact/Screening or were rejected for any reason other than "no reply".
+Of the Applied Applications, the share that reached Contact/Screening or were rejected for any reason other than "no reply". A corrected Rejection counts with its corrected reason.
 
 ## Closing without an outcome
 
 **Archive**:
-Taking an Application out of the current work: off the board, the KPIs, the weekly goal and the next actions, while it still counts in historical metrics (funnel, rejection reasons, per month, time per Stage). Unarchiving puts it back at the top of its Stage.
+Taking an Application out of the current work: off the board, the KPIs, the weekly goal, the next actions and Automatic rejection, while it still counts in historical metrics (funnel, rejection reasons, per month, time per Stage). Unarchiving puts it back at the top of its Stage and restarts the count toward the Idle limit.
 _Avoid_: Hide, Close
 
 **Delete**:
@@ -55,7 +63,7 @@ Whether an Application is in Brazil or Abroad, derived from its country. Every A
 _Avoid_: Section, Nacional, Internacional, Domestic
 
 **Next action**:
-A dated note on an Application saying what the user must do next. It is overdue when its date is before today.
+A dated note on an Application saying what the user must do next. It is overdue when its date is before today. A Next action dated today or later holds off Automatic rejection.
 _Avoid_: Reminder, Task, Follow-up
 
 **Weekly goal**:

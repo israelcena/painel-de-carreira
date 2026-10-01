@@ -4,11 +4,11 @@ import {
   Archive,
   ArrowLeft,
   ArrowRight,
-  CornerUpLeft,
   Download,
   FileUser,
   Loader2,
   Pencil,
+  ThumbsDown,
   Trash2,
   Unlink,
   Upload,
@@ -71,6 +71,7 @@ function DetailsTab({
   onSaved,
   onClose,
   onMove,
+  onEditRejection,
 }: {
   app: AppCard;
   stages: StageDTO[];
@@ -79,6 +80,7 @@ function DetailsTab({
   /** Arquivou ou excluiu: a vaga sai do quadro e o modal fecha. */
   onClose: () => void;
   onMove: (app: AppCard, toStageId: string) => void;
+  onEditRejection: () => void;
 }) {
   const [company, setCompany] = useState(app.company);
   const [roleTitle, setRoleTitle] = useState(app.roleTitle);
@@ -159,18 +161,13 @@ function DetailsTab({
       }}
       className="space-y-4"
     >
-      <RejectionBanner app={app} stages={stages}>
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() =>
-            onMove(app, app.rejectedFromStageId ?? stages[0]?.id ?? "")
-          }
-          className="mt-2 flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-extrabold text-ink-soft shadow-card transition hover:text-brand"
-        >
-          <CornerUpLeft size={13} /> Retornar ao funil
-        </button>
-      </RejectionBanner>
+      <RejectionBanner
+        app={app}
+        stages={stages}
+        disabled={pending}
+        onEditReason={onEditRejection}
+        onRestore={(toStageId) => onMove(app, toStageId)}
+      />
 
       {/* Uma grade só: os pares ficam lado a lado e, no modal largo, em 4 colunas */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 3xl:grid-cols-4">
@@ -802,6 +799,7 @@ export function ApplicationModal({
   onClose,
   onMove,
   onArchive,
+  onEditRejection,
 }: {
   app: AppCard | null;
   stages: StageDTO[];
@@ -809,6 +807,8 @@ export function ApplicationModal({
   onMove: (app: AppCard, toStageId: string) => void;
   /** Pede confirmação no quadro antes de arquivar. */
   onArchive: (app: AppCard) => void;
+  /** Opens the board's RejectModal to edit the current Rejection. */
+  onEditRejection: (app: AppCard) => void;
 }) {
   // Abre na visão de leitura; "Editar" (ou o lápis de uma seção) leva às abas
   const [mode, setMode] = useState<"view" | "edit">("view");
@@ -818,10 +818,13 @@ export function ApplicationModal({
     [stages]
   );
 
-  // Volta para a visão ao trocar de vaga (ajuste durante o render)
+  // Back to the read view when the Application changes or the modal comes back
+  // after being hidden (archive confirmation, RejectModal), so `null` counts as
+  // a change too (adjusting state during render)
+  const appId = app?.id ?? null;
   const [lastAppId, setLastAppId] = useState<string | null>(null);
-  if (app && lastAppId !== app.id) {
-    setLastAppId(app.id);
+  if (lastAppId !== appId) {
+    setLastAppId(appId);
     setMode("view");
     setTab("detalhes");
   }
@@ -839,6 +842,10 @@ export function ApplicationModal({
   const funnel = stages.filter((s) => !s.isRejection);
   const funnelIndex = funnel.findIndex((s) => s.id === app.stageId);
   const nextStage = funnelIndex >= 0 ? funnel[funnelIndex + 1] : undefined;
+  // Rejecting goes through the board's RejectModal, like "Mover para etapa" →
+  // Rejeitado; an already rejected Application edits its reason in the banner
+  const rejectionStage =
+    funnelIndex >= 0 ? stages.find((s) => s.isRejection) : undefined;
 
   return (
     <Modal
@@ -877,6 +884,18 @@ export function ApplicationModal({
             >
               <Archive size={13} strokeWidth={2.5} />
               <span className="hidden sm:inline">Arquivar</span>
+            </button>
+          )}
+          {!editing && rejectionStage && (
+            <button
+              type="button"
+              onClick={() => onMove(app, rejectionStage.id)}
+              title="Rejeitar vaga"
+              aria-label="Rejeitar vaga"
+              className="flex min-h-7 items-center gap-1.5 rounded-full bg-panel px-2 py-1.5 text-xs font-extrabold text-ink-soft transition hover:bg-red-50 hover:text-red-500 sm:px-3"
+            >
+              <ThumbsDown size={13} strokeWidth={2.5} />
+              <span className="hidden sm:inline">Rejeitar</span>
             </button>
           )}
           {!editing && nextStage && (
@@ -950,6 +969,7 @@ export function ApplicationModal({
               onSaved={() => setMode("view")}
               onClose={onClose}
               onMove={onMove}
+              onEditRejection={() => onEditRejection(app)}
             />
           )}
           {tab === "descricao" && <DescriptionTab key={app.id} app={app} />}
@@ -965,6 +985,8 @@ export function ApplicationModal({
           stages={stages}
           stageNameById={stageNameById}
           onEdit={openEdit}
+          onEditRejection={() => onEditRejection(app)}
+          onRestore={(toStageId) => onMove(app, toStageId)}
         />
       )}
     </Modal>

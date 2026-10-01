@@ -1,8 +1,14 @@
 import { REJECTION_REASON_LABELS } from "./domain";
+import { isRejectionCorrection, REJECTION_FIELD_LABELS } from "./rejectionHistory";
 import type { EventDTO, RejectionReason } from "./types";
 
 function str(value: unknown): string | undefined {
   return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function reasonLabel(value: unknown): string | undefined {
+  const reason = str(value) as RejectionReason | undefined;
+  return reason ? REJECTION_REASON_LABELS[reason] ?? reason : undefined;
 }
 
 /**
@@ -28,18 +34,32 @@ export function describeEvent(
     case "STAGE_CHANGED":
       return from && to ? `Movida de ${from} para ${to}` : `Movida para ${to ?? "outra etapa"}`;
     case "REJECTED": {
-      const reason = str(data.reason) as RejectionReason | undefined;
-      const label = reason ? REJECTION_REASON_LABELS[reason] ?? reason : undefined;
+      const label = reasonLabel(data.reason);
       const note = str(data.note);
       const fromPart = from ? ` (estava em ${from})` : "";
       const notePart = note ? ` — ${note}` : "";
-      return `Rejeitada${label ? `: ${label.toLowerCase()}` : ""}${fromPart}${notePart}`;
+      // Idle sweep (lib/autoRejectionSweep.ts) marks its events as automatic
+      const verb = data.automatic === true ? "Rejeitada automaticamente" : "Rejeitada";
+      return `${verb}${label ? `: ${label.toLowerCase()}` : ""}${fromPart}${notePart}`;
     }
     case "RESTORED":
       return `Retornou ao funil${to ? ` na etapa ${to}` : ""}`;
     case "NOTE":
       return `Nota: ${str(data.text) ?? ""}`;
     case "EDITED": {
+      // "Editar motivo" (actions/applications.ts): an edit of the current
+      // Rejection, not a new one
+      if (isRejectionCorrection(data)) {
+        const fields = Array.isArray(data.fields) ? (data.fields as string[]) : [];
+        const reason = reasonLabel(data.reason);
+        const previous = reasonLabel(data.previousReason);
+        const parts = fields.map((field) =>
+          field === REJECTION_FIELD_LABELS.reason && reason && previous
+            ? `${field} de ${previous.toLowerCase()} para ${reason.toLowerCase()}`
+            : field
+        );
+        return `Rejeição editada${parts.length > 0 ? `: ${parts.join(", ")}` : ""}`;
+      }
       // Troca de currículo (actions/documents.ts): nomes gravados no evento
       const resume = str(data.resumeName);
       if (resume) return `Currículo vinculado: ${resume}`;

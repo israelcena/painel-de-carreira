@@ -8,10 +8,15 @@ import {
   Users,
 } from "lucide-react";
 import type { Metadata } from "next";
+import { AutoRejectionCard } from "@/components/dashboard/AutoRejectionCard";
 import { BarList } from "@/components/dashboard/BarList";
 import { MonthlyChart } from "@/components/dashboard/MonthlyChart";
 import { WeeklyGoalCard } from "@/components/dashboard/WeeklyGoalCard";
 import { Flag } from "@/components/ui/Flag";
+import {
+  getAutoRejectionSettings,
+  runAutoRejectionSweep,
+} from "@/lib/autoRejectionSweep";
 import { countryName } from "@/lib/countries";
 import { describeEvent, EVENT_COLORS } from "@/lib/events";
 import { formatDate, formatDateTime, relativeTime } from "@/lib/format";
@@ -79,7 +84,12 @@ function KpiTile({
 }
 
 export default async function DashboardPage() {
-  const data = await getDashboardData();
+  // Before any read: idle Applications move to Rejected first
+  await runAutoRejectionSweep();
+  const [data, autoRejection] = await Promise.all([
+    getDashboardData(),
+    getAutoRejectionSettings(),
+  ]);
   const { kpis } = data;
 
   return (
@@ -112,6 +122,11 @@ export default async function DashboardPage() {
         <WeeklyGoalCard
           goal={data.metaSemana.goal}
           count={data.metaSemana.count}
+        />
+
+        <AutoRejectionCard
+          enabled={autoRejection.enabled}
+          days={autoRejection.days}
         />
 
         <Card title="Próximas ações">

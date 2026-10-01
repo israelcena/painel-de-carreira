@@ -4,7 +4,11 @@ import type { EventType, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { isKnownCountry } from "@/lib/countries";
 import { prisma } from "@/lib/db";
-import { dateFromInput } from "@/lib/format";
+import { dateFromInput, dateToInput } from "@/lib/format";
+import {
+  rejectionCorrectionData,
+  rejectionCorrectionFields,
+} from "@/lib/rejectionHistory";
 import { assertSession } from "@/lib/session";
 import type {
   EventDTO,
@@ -358,14 +362,19 @@ export async function rejectApplication(params: {
     if (!rejectionStage)
       return { ok: false, error: "Etapa de rejeição não configurada." };
 
-    const alreadyRejected = app.stage.isRejection;
     const note = clean(params.note);
+    if (app.stage.isRejection) {
+      return await correctRejection(app, {
+        reason: params.reason,
+        note,
+        rejectedAt: params.rejectedAt ?? null,
+      });
+    }
+
     const rejectedAt = params.rejectedAt
       ? dateFromInput(params.rejectedAt)
       : new Date();
-    const position = alreadyRejected
-      ? app.position
-      : await startOfColumnPosition(rejectionStage.id);
+    const position = await startOfColumnPosition(rejectionStage.id);
 
     await prisma.application.update({
       where: { id: app.id },
@@ -375,9 +384,7 @@ export async function rejectApplication(params: {
         rejectionReason: params.reason,
         rejectionNote: note,
         rejectedAt,
-        rejectedFromStageId: alreadyRejected
-          ? app.rejectedFromStageId
-          : app.stageId,
+        rejectedFromStageId: app.stageId,
         events: {
           create: {
             type: "REJECTED",
@@ -399,6 +406,63 @@ export async function rejectApplication(params: {
   } catch (error) {
     return fail(error, "Erro ao registrar a rejeição.");
   }
+}
+
+/**
+ * "Editar motivo": corrects the current Rejection in place (same lane, same
+ * position, same Stage it was rejected from). Recorded as an EDITED event, not
+ * REJECTED, so it is no new entry into the Rejected Stage and the History does
+ * not show a second Rejection. Saving without changes records nothing.
+ */
+async function correctRejection(
+  app: {
+    id: string;
+    rejectionReason: RejectionReason | null;
+    rejectionNote: string | null;
+    rejectedAt: Date | null;
+  },
+  next: { reason: RejectionReason; note: string | null; rejectedAt: string | null }
+): Promise<ActionResult> {
+  // The form only carries a day: an unchanged (or cleared) day keeps the
+  // stored moment, e.g. the deadline of an Automatic rejection
+  const day = next.rejectedAt;
+  const rejectedAt =
+    !day || (app.rejectedAt && dateToInput(app.rejectedAt) === day)
+      ? (app.rejectedAt ?? new Date())
+      : dateFromInput(day);
+
+  const fields = rejectionCorrectionFields(
+    {
+      reason: app.rejectionReason,
+      note: app.rejectionNote,
+      rejectedAt: app.rejectedAt,
+    },
+    { reason: next.reason, note: next.note, rejectedAt }
+  );
+  if (fields.length === 0) return { ok: true };
+
+  await prisma.application.update({
+    where: { id: app.id },
+    data: {
+      rejectionReason: next.reason,
+      rejectionNote: next.note,
+      rejectedAt,
+      events: {
+        create: {
+          type: "EDITED",
+          data: rejectionCorrectionData({
+            fields,
+            reason: next.reason,
+            previousReason: app.rejectionReason,
+            note: next.note,
+          }) as Prisma.InputJsonValue,
+        },
+      },
+    },
+  });
+
+  refresh();
+  return { ok: true };
 }
 
 export async function updateApplication(
