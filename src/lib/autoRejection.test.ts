@@ -10,6 +10,7 @@ import {
   findIdleRejections,
   idleClockStart,
   idleDeadline,
+  isInterestStage,
   parseIdleLimitDays,
   readAutoRejectionSettings,
   type IdleCandidate,
@@ -98,28 +99,48 @@ describe("idleDeadline", () => {
   });
 });
 
+describe("isInterestStage", () => {
+  it("is true only for the first non-rejection Stage", () => {
+    assert.equal(isInterestStage("interesse", STAGES), true);
+    for (const id of ["aplicado", "contato", "entrevista", "teste", "oferta"]) {
+      assert.equal(isInterestStage(id, STAGES), false, id);
+    }
+    assert.equal(isInterestStage("rejeitado", STAGES), false);
+    assert.equal(isInterestStage("unknown", STAGES), false);
+  });
+
+  it("resolves Interest by order, not by name", () => {
+    const renamed: IdleStage[] = [
+      { id: "b", name: "Interesse", order: 20, isRejection: false },
+      { id: "x", name: "Rejeitado", order: 0, isRejection: true },
+      { id: "a", name: "Aplicado", order: 10, isRejection: false },
+    ];
+    assert.equal(isInterestStage("a", renamed), true);
+    assert.equal(isInterestStage("b", renamed), false);
+    assert.equal(isInterestStage("x", renamed), false);
+  });
+});
+
 describe("autoRejectionReason", () => {
-  it("is OUTRO for the first and the last non-rejection Stage", () => {
-    assert.equal(autoRejectionReason("interesse", STAGES), "OUTRO");
+  it("is OUTRO for the last non-rejection Stage (Offer)", () => {
     assert.equal(autoRejectionReason("oferta", STAGES), "OUTRO");
   });
 
-  it("is SEM_RETORNO for every Stage in between", () => {
+  it("is SEM_RETORNO for every Stage between Interest and Offer", () => {
     for (const id of ["aplicado", "contato", "entrevista", "teste"]) {
       assert.equal(autoRejectionReason(id, STAGES), "SEM_RETORNO", id);
     }
   });
 
-  it("resolves the first and last Stage by order, not by name", () => {
+  it("resolves Offer by order, not by name", () => {
     const renamed: IdleStage[] = [
-      { id: "b", name: "Interesse", order: 20, isRejection: false },
+      { id: "b", name: "Oferta", order: 20, isRejection: false },
       { id: "x", name: "Rejeitado", order: 99, isRejection: true },
-      { id: "c", name: "Oferta", order: 30, isRejection: false },
-      { id: "a", name: "Aplicado", order: 10, isRejection: false },
+      { id: "c", name: "Aplicado", order: 30, isRejection: false },
+      { id: "a", name: "Interesse", order: 10, isRejection: false },
     ];
-    assert.equal(autoRejectionReason("a", renamed), "OUTRO");
-    assert.equal(autoRejectionReason("b", renamed), "SEM_RETORNO");
     assert.equal(autoRejectionReason("c", renamed), "OUTRO");
+    assert.equal(autoRejectionReason("b", renamed), "SEM_RETORNO");
   });
 });
 
@@ -222,11 +243,17 @@ describe("findIdleRejections", () => {
     assert.deepEqual(findIdleRejections([candidate()], STAGES, null, now), []);
   });
 
+  it("never rejects an Application in Interest, however long it is idle", () => {
+    const app = candidate({ stageId: "interesse" });
+    const now = at("2027-12-31T12:00:00Z");
+    assert.deepEqual(findIdleRejections([app], STAGES, 1, now), []);
+  });
+
   it("picks the reason and note from the Stage the Application was in", () => {
     const now = at("2026-12-31T12:00:00Z");
     const result = findIdleRejections(
       [
-        candidate({ id: "i", stageId: "interesse" }),
+        candidate({ id: "a", stageId: "aplicado" }),
         candidate({
           id: "o",
           stageId: "oferta",
@@ -241,9 +268,9 @@ describe("findIdleRejections", () => {
       result.map((r) => [r.applicationId, r.reason, r.note]),
       [
         [
-          "i",
-          "OUTRO",
-          "Movida automaticamente após 1 dia sem movimentação em Interesse.",
+          "a",
+          "SEM_RETORNO",
+          "Movida automaticamente após 1 dia sem movimentação em Aplicado.",
         ],
         [
           "o",

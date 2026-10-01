@@ -4,6 +4,7 @@ import type { EventType, Prisma } from "@prisma/client";
 import {
   AUTO_REJECTION_SETTING_KEYS,
   findIdleRejections,
+  isInterestStage,
   readAutoRejectionSettings,
   type AutoRejectionSettings,
   type IdleCandidate,
@@ -57,6 +58,17 @@ async function sweep(now: Date): Promise<void> {
   const settings = await getAutoRejectionSettings();
   if (!settings.enabled) return;
 
+  const stages = await prisma.stage.findMany({
+    select: { id: true, name: true, order: true, isRejection: true },
+  });
+  const rejectionStage = stages.find((s) => s.isRejection);
+  if (!rejectionStage) return;
+  // Interest is never rejected automatically, and its idle Applications would
+  // otherwise come back on every load
+  const interestStageIds = stages
+    .filter((s) => isInterestStage(s.id, stages))
+    .map((s) => s.id);
+
   // Cheap prefilter: only Applications with no Next action, stage entry or
   // unarchive after the cutoff can be due, so a normal load returns nothing.
   const cutoff = new Date(now.getTime() - settings.days * DAY_MS);
@@ -64,6 +76,7 @@ async function sweep(now: Date): Promise<void> {
     where: {
       archivedAt: null,
       stage: { isRejection: false },
+      stageId: { notIn: interestStageIds },
       OR: [{ nextActionAt: null }, { nextActionAt: { lte: cutoff } }],
       events: {
         none: {
@@ -87,12 +100,6 @@ async function sweep(now: Date): Promise<void> {
     },
   });
   if (apps.length === 0) return;
-
-  const stages = await prisma.stage.findMany({
-    select: { id: true, name: true, order: true, isRejection: true },
-  });
-  const rejectionStage = stages.find((s) => s.isRejection);
-  if (!rejectionStage) return;
 
   const candidates: IdleCandidate[] = apps.map((app) => ({
     id: app.id,
