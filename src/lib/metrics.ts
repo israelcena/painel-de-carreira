@@ -1,6 +1,7 @@
 import { prisma } from "./db";
 import { REJECTION_REASON_LABELS } from "./domain";
 import { formatMonth } from "./format";
+import { repliedInPastRejection } from "./rejectionHistory";
 import type { EventWithApp, RejectionReason, StageDTO } from "./types";
 
 export interface KpiData {
@@ -144,15 +145,20 @@ export async function getDashboardData(): Promise<DashboardData> {
   for (const event of events) {
     if (!ENTER_STAGE_EVENTS.has(event.type) || !event.toStageId) continue;
     const stage = stageById.get(event.toStageId);
-    if (!stage) continue;
-    if (stage.isRejection) {
-      const data = (event.data ?? {}) as { reason?: string };
-      if (data.reason && data.reason !== "SEM_RETORNO") {
-        rejectedWithReply.add(event.applicationId);
-      }
-      continue;
-    }
+    if (!stage || stage.isRejection) continue;
     bumpReached(event.applicationId, stage.order);
+  }
+
+  // Past Rejections count as a reply by their final reason, corrections
+  // included; the current one was counted above by rejectionReason
+  const isRejectionStage = (stageId: string) =>
+    stageById.get(stageId)?.isRejection === true;
+  for (const app of allApps) {
+    const stillRejected = isRejectionStage(app.stageId);
+    const appEvents = eventsByApp.get(app.id) ?? [];
+    if (repliedInPastRejection(appEvents, isRejectionStage, stillRejected)) {
+      rejectedWithReply.add(app.id);
+    }
   }
 
   const nonRejectionStages = stages.filter((s) => !s.isRejection);

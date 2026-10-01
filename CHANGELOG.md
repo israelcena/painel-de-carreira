@@ -21,6 +21,25 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 - O item de navegação "Quadros" virou "Quadro".
 - **Build na Vercel** (`vercel.json`): `next build` roda antes de `prisma migrate deploy` + seed,
   para que uma migration só entre no banco quando o deploy novo já está pronto para ser promovido.
+- **The first deploy moves every idle Application to Rejeitado.** Automatic rejection (see
+  Adicionado) is on by default with a 10-day limit and is retroactive: the first time the Quadro,
+  Dashboard or Histórico renders after the deploy, every Application that is not archived and has
+  gone 10 days or more without moving (counted from the latest of entering its Stage, its Next
+  action date and its last unarchive) goes to Rejeitado, dated the day it reached 10 days.
+  **Opening a Vercel preview of this branch does the same on the production database**, because
+  previews share it. To keep everything where it is, run
+  `INSERT INTO settings (key, value) VALUES ('autoRejectionEnabled', 'false');` before the first
+  load, and switch it on from the Dashboard when ready.
+- **The rejection modal no longer pre-selects a reason.** It used to open on "Sem retorno
+  (ghosting)", so a quick confirm recorded a reason nobody chose. The select now starts on
+  "Selecione o motivo", and **Confirmar rejeição** stays disabled until a reason is picked. This
+  applies wherever the modal opens, dragging a card into Rejeitado included.
+- **Cancelling a rejection started from an Application returns to its view.** "Mover para etapa"
+  → Rejeitado used to close the Application modal, so cancelling left you on the board. Now the
+  Application modal is hidden while the rejection modal is open (as with the Arquivar
+  confirmation) and comes back in its read view when you cancel. Confirming closes it with the
+  toast "Vaga movida para Rejeitado". Dragging a card into Rejeitado keeps its behaviour:
+  cancelling puts the card back.
 
 ### Adicionado
 
@@ -39,6 +58,34 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
   volta se você cancelar. No celular os dois viram só ícone, para não espremer o título. Ao mover
   pelo modal (avançar, "Mover para etapa" ou "Retornar ao funil"), um aviso diz para qual etapa a
   vaga foi.
+- **Rejeitar in the Application view header**, next to Arquivar and Avançar de fase, and icon-only
+  on mobile like them ("Rejeitar vaga" in the tooltip). It opens the rejection modal for that
+  Application and is hidden once the Application is in Rejeitado.
+- **Editar motivo in the rejection banner**, both in the read view and in the Detalhes edit tab. It
+  opens the rejection modal as "Editar rejeição", filled with the current reason, details and date;
+  **Salvar** updates the Rejection, keeps the card where it is in Rejeitado, adds a line to the
+  History and returns to the read view. The line is an edit, not a second Rejection: it reads
+  e.g. "Rejeição editada: motivo de sem retorno (ghosting) para perfil não aderente à vaga" (or
+  names the date and details when those changed), and the card keeps its days in Rejeitado, its
+  place in "Ordenar por mais recentes" and the board's date filters. The Response rate uses the
+  corrected reason, so changing a reason to "Sem retorno (ghosting)" stops counting it as a reply.
+  Saving without changes records nothing. The read-view banner also gets **Retornar ao funil**, so
+  both banners offer the same two actions.
+- **Automatic rejection of idle Applications.** An Application that is not archived and has gone
+  a set number of days without moving is moved to Rejeitado by the app, from any Stage, Interesse
+  to Oferta. The limit is one number for every Stage: 10 days by default, from 1 to 90. The count
+  starts at the latest of entering the current Stage, the Next action date and the last unarchive,
+  so a Next action dated today or later holds it off, and restoring or unarchiving starts it over.
+  The reason is "Sem retorno (ghosting)", or "Outro" from Interesse and Oferta, and the details
+  read e.g. "Movida automaticamente após 10 dias sem movimentação em Aplicado.". The Rejection is
+  dated the day the limit was reached, not the day the app was opened (so time per Stage, the date
+  shown in Histórico, the days in Rejeitado and the "Ordenar por mais recentes" order do not depend
+  on when the app was opened), the card goes to the top of Rejeitado, and the History shows
+  "Rejeitada automaticamente: …". There is no warning beforehand. It runs when the Quadro,
+  Dashboard or Histórico page loads, with no scheduler (ADR-0004), and is retroactive: switching it
+  on or lowering the limit moves every Application already past it on the next load. A new
+  **Rejeição automática** card on the Dashboard, next to the weekly goal, switches it on and off
+  and sets the number of days.
 - **Currículo em cada vaga.** Nova aba **Currículo** no modal da vaga: vincule uma versão já salva
   em Documentos ou envie um arquivo novo (ex.: CV adaptado para a vaga), que entra na biblioteca e
   já fica vinculado. Um currículo por vaga; trocar substitui o vínculo e "Remover vínculo" mantém o
@@ -159,6 +206,13 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
   The skills it uses (implement, tdd, pr, code-review, domain-modeling) are now installed in the repo.
 - From now on, everything except UI text (code, commits, issues, pull requests, docs and new changelog
   entries) is written in English.
+- **`npm test`** runs `node --test 'src/**/*.test.ts'`: Node's built-in test runner with its
+  built-in TypeScript type stripping (on by default since Node 22.18; CI uses Node 24), so there is
+  no test dependency, and the CI step `npm run test --if-present` now runs it. Tests import the
+  module under test with its `.ts` extension, which `tsconfig.json` now allows
+  (`allowImportingTsExtensions`, alongside the existing `noEmit`). The suites cover the
+  Automatic rejection rules in `src/lib/autoRejection.ts` and the Rejection correction and
+  Response rate rules in `src/lib/rejectionHistory.ts`.
 
 ### Migração de banco
 

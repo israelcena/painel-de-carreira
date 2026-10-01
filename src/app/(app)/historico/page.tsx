@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { HistoryList, type HistoryEvent } from "@/components/history/HistoryList";
+import { runAutoRejectionSweep } from "@/lib/autoRejectionSweep";
 import { prisma } from "@/lib/db";
 import type { StageDTO } from "@/lib/types";
 
@@ -7,6 +8,8 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Histórico" };
 
 export default async function HistoricoPage() {
+  // Before any read: idle Applications move to Rejected first
+  await runAutoRejectionSweep();
   const [stages, events] = await Promise.all([
     prisma.stage.findMany({ orderBy: { order: "asc" } }),
     prisma.applicationEvent.findMany({

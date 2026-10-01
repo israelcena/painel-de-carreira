@@ -4,6 +4,7 @@ import {
   CalendarClock,
   CalendarX2,
   Clock,
+  CornerUpLeft,
   Download,
   ExternalLink,
   FileUser,
@@ -33,19 +34,33 @@ export type ApplicationTab =
   | "swot"
   | "historico";
 
-/** Aviso de vaga rejeitada (quando, de qual etapa e por quê). `children` = ações. */
+const bannerButtonCls =
+  "flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-extrabold text-ink-soft shadow-card transition hover:text-brand disabled:opacity-60";
+
+/**
+ * Rejection notice (when, from which Stage and why) with its two actions, the
+ * same in the read view and in the edit-mode Details tab.
+ */
 export function RejectionBanner({
   app,
   stages,
-  children,
+  disabled = false,
+  onEditReason,
+  onRestore,
 }: {
   app: AppCard;
   stages: StageDTO[];
-  children?: ReactNode;
+  disabled?: boolean;
+  /** Opens the RejectModal pre-filled with the current Rejection. */
+  onEditReason: () => void;
+  /** Restore: moves the Application back to `toStageId`. */
+  onRestore: (toStageId: string) => void;
 }) {
   const stage = stages.find((s) => s.id === app.stageId);
   if (!stage?.isRejection || !app.rejectionReason) return null;
   const rejectedFrom = stages.find((s) => s.id === app.rejectedFromStageId);
+  // Back to the Stage it was rejected from, else to the start of the funnel
+  const restoreTo = rejectedFrom ?? stages.find((s) => !s.isRejection);
 
   return (
     <div className="rounded-xl border border-red-200 bg-red-50 p-3">
@@ -58,7 +73,27 @@ export function RejectionBanner({
         Motivo: {REJECTION_REASON_LABELS[app.rejectionReason]}
         {app.rejectionNote ? ` — ${app.rejectionNote}` : ""}
       </p>
-      {children}
+      <div className="mt-2 flex flex-wrap gap-2">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={onEditReason}
+          className={bannerButtonCls}
+        >
+          <Pencil size={13} /> Editar motivo
+        </button>
+        {restoreTo && (
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => onRestore(restoreTo.id)}
+            title={`Mover para ${restoreTo.name}`}
+            className={bannerButtonCls}
+          >
+            <CornerUpLeft size={13} /> Retornar ao funil
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -238,11 +273,15 @@ export function ApplicationView({
   stages,
   stageNameById,
   onEdit,
+  onEditRejection,
+  onRestore,
 }: {
   app: AppCard;
   stages: StageDTO[];
   stageNameById: Record<string, string>;
   onEdit: (tab: ApplicationTab) => void;
+  onEditRejection: () => void;
+  onRestore: (toStageId: string) => void;
 }) {
   const stage = stages.find((s) => s.id === app.stageId);
   const days = daysSince(app.stageEnteredAt);
@@ -270,7 +309,12 @@ export function ApplicationView({
         </span>
       </div>
 
-      <RejectionBanner app={app} stages={stages} />
+      <RejectionBanner
+        app={app}
+        stages={stages}
+        onEditReason={onEditRejection}
+        onRestore={onRestore}
+      />
 
       {(app.nextActionNote || app.nextActionAt) && (
         <div

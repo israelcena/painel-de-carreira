@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Board } from "@/components/board/Board";
+import { runAutoRejectionSweep } from "@/lib/autoRejectionSweep";
 import { prisma } from "@/lib/db";
 import type { AppCard, StageDTO } from "@/lib/types";
 
@@ -7,6 +8,8 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Quadro" };
 
 export default async function BoardPage() {
+  // Before any read: idle Applications move to Rejected first
+  await runAutoRejectionSweep();
   const [stages, applications] = await Promise.all([
     prisma.stage.findMany({ orderBy: { order: "asc" } }),
     prisma.application.findMany({

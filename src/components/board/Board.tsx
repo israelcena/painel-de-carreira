@@ -197,6 +197,8 @@ export function Board({
   );
   const [activeId, setActiveId] = useState<string | null>(null);
   const [rejectTarget, setRejectTarget] = useState<AppCard | null>(null);
+  // "Editar motivo": the target is already rejected, so nothing moves
+  const [rejectEditing, setRejectEditing] = useState(false);
   const [rejectError, setRejectError] = useState<string | null>(null);
   const [rejectPending, startRejectTransition] = useTransition();
   const [openApp, setOpenApp] = useState<AppCard | null>(null);
@@ -226,6 +228,15 @@ export function Board({
       else next.delete(id);
       return next;
     });
+
+  // Updates the card and, when it is the one open, the Application modal too
+  // (it renders `openApp`, not `appsById`)
+  const patchApp = (id: string, patch: Partial<AppCard>) => {
+    setAppsById((prev) =>
+      prev[id] ? { ...prev, [id]: { ...prev[id], ...patch } } : prev
+    );
+    setOpenApp((prev) => (prev?.id === id ? { ...prev, ...patch } : prev));
+  };
 
   // Sincroniza com os dados do servidor (após revalidação das actions).
   // Padrão "ajustar estado durante o render" — evita renders em cascata.
@@ -424,6 +435,15 @@ export function Board({
       .catch(() => rollback(snap, "Erro ao mover a vaga."));
   };
 
+  // Asks for the reason of a new Rejection (drag into Rejeitado, "Rejeitar" or
+  // "Mover para etapa" in the Application modal) or, with `editing`, changes
+  // the current one ("Editar motivo")
+  const openReject = (app: AppCard, editing = false) => {
+    setRejectError(null);
+    setRejectEditing(editing);
+    setRejectTarget(app);
+  };
+
   const onDragStart = ({ active }: DragStartEvent) => {
     setActiveId(String(active.id));
     takeSnapshot();
@@ -497,8 +517,7 @@ export function Board({
 
     // Soltou na coluna Rejeitado vindo de outra etapa → pede o motivo
     if (toStage.isRejection && !originStage.isRejection) {
-      setRejectError(null);
-      setRejectTarget(app);
+      openReject(app);
       return;
     }
 
@@ -514,39 +533,68 @@ export function Board({
 
   const confirmReject = (payload: RejectPayload) => {
     if (!rejectTarget || !rejectionStage) return;
-    const appId = rejectTarget.id;
+    const app = rejectTarget;
+    const editing = rejectEditing;
+    // Opened from the Application modal (hidden meanwhile) rather than a drag
+    const fromModal = openApp?.id === app.id;
     startRejectTransition(async () => {
       const result = await rejectApplication({
-        id: appId,
+        id: app.id,
         reason: payload.reason,
         note: payload.note || null,
         rejectedAt: payload.rejectedAt || null,
       });
-      if (result.ok) {
-        setAppsById((prev) => ({
-          ...prev,
-          [appId]: {
-            ...prev[appId],
-            stageId: rejectionStage.id,
-            rejectionReason: payload.reason,
-            stageEnteredAt: new Date(),
-          },
-        }));
-        setRejectTarget(null);
-      } else {
+      if (!result.ok) {
         setRejectError(result.error);
+        return;
       }
+      // Same values the server stores, so the banner is right before the
+      // resync (a cleared date keeps the current one when editing)
+      const rejection = {
+        rejectionReason: payload.reason,
+        rejectionNote: payload.note.trim() || null,
+        rejectedAt: payload.rejectedAt
+          ? dateFromInput(payload.rejectedAt)
+          : editing
+            ? app.rejectedAt
+            : new Date(),
+      };
+      if (editing) {
+        // Keeps lane and position; the Application modal comes back with it
+        patchApp(app.id, rejection);
+      } else {
+        patchApp(app.id, {
+          ...rejection,
+          stageId: rejectionStage.id,
+          rejectedFromStageId: app.stageId,
+          stageEnteredAt: new Date(),
+        });
+        if (fromModal) {
+          setOpenApp(null);
+          setToast(`Vaga movida para ${rejectionStage.name}`);
+        }
+      }
+      setRejectTarget((target) => (target?.id === app.id ? null : target));
     });
   };
 
+  // Puts a dragged or moved card back; the Application modal, if it was the
+  // opener, shows up again in the read view
   const cancelReject = () => {
-    restoreSnapshot();
+    // Escape, backdrop and X land here too: once the rejection is being saved
+    // it can no longer be cancelled, so the UI must not pretend it was
+    if (rejectPending) return;
+    // Editing moved nothing, and an older snapshot may still be around
+    if (!rejectEditing) restoreSnapshot();
     setRejectTarget(null);
   };
 
-  // Movimentação vinda do modal da vaga ("Avançar de fase", select "Mover para
-  // etapa", "Retornar ao funil"). O card entra no topo da raia de destino (mais
-  // recente em cima); o modal fecha e o toast diz para onde ele foi.
+  // Moves started from the Application modal ("Avançar de fase", "Rejeitar",
+  // "Mover para etapa", "Retornar ao funil"). The card goes to the top of the
+  // target lane (most recent on top). For a non-rejection target the modal
+  // closes and a toast names the target. A Rejected target opens the
+  // RejectModal with the Application modal hidden: cancelling brings back the
+  // read view, confirming closes it with the toast.
   const handleModalMove = (app: AppCard, toStageId: string) => {
     const toStage = stagesById[toStageId];
     if (!toStage || toStageId === app.stageId) return;
@@ -563,14 +611,15 @@ export function Board({
       ];
       return next;
     });
-    setOpenApp(null);
 
+    // The Application modal stays open, hidden behind the RejectModal, so
+    // cancelling brings it back
     if (toStage.isRejection) {
-      setRejectError(null);
-      setRejectTarget(app);
+      openReject(app);
       return;
     }
 
+    setOpenApp(null);
     const firstId = (columns[toStageId] ?? [])[0];
     const position = firstId
       ? (appsById[firstId]?.position ?? 2048) - 1024
@@ -742,14 +791,21 @@ export function Board({
         onClose={() => setCreateOpen(false)}
       />
 
-      {/* Some enquanto a confirmação de arquivar desta vaga está aberta (dois
-          Modals empilhados fechariam juntos no Escape); cancelar a traz de volta */}
+      {/* Hidden while the archive confirmation or the RejectModal for this
+          Application is open (two stacked Modals would both close on Escape);
+          cancelling brings it back */}
       <ApplicationModal
-        app={archiveTarget && archiveTarget.id === openApp?.id ? null : openApp}
+        app={
+          openApp &&
+          (archiveTarget?.id === openApp.id || rejectTarget?.id === openApp.id)
+            ? null
+            : openApp
+        }
         stages={stages}
         onClose={() => setOpenApp(null)}
         onMove={handleModalMove}
         onArchive={setArchiveTarget}
+        onEditRejection={(app) => openReject(app, true)}
       />
 
       <ResumePreviewModal
@@ -758,13 +814,18 @@ export function Board({
       />
 
       <RejectModal
-        key={rejectTarget?.id ?? "none"}
+        key={
+          rejectTarget
+            ? `${rejectTarget.id}:${rejectEditing ? "edit" : "new"}`
+            : "none"
+        }
         open={rejectTarget !== null}
         appLabel={
           rejectTarget
             ? `${rejectTarget.company} — ${rejectTarget.roleTitle}`
             : ""
         }
+        initial={rejectEditing ? rejectTarget : null}
         pending={rejectPending}
         error={rejectError}
         onConfirm={confirmReject}
