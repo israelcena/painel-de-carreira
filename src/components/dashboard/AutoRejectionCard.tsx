@@ -86,8 +86,8 @@ export function AutoRejectionCard({
 
         <p className="mt-2 text-[11px] font-semibold text-muted">
           A contagem começa na data mais recente entre a entrada na etapa, a
-          Próxima ação e o desarquivamento. Vale para todas as etapas, de
-          Interesse a Oferta; arquivadas ficam de fora. Ao ativar ou reduzir o
+          Próxima ação e o desarquivamento. Vale para as etapas de Aplicado a
+          Oferta; Interesse e arquivadas ficam de fora. Ao ativar ou reduzir o
           prazo, as vagas que já passaram dele vão para Rejeitado.
         </p>
 

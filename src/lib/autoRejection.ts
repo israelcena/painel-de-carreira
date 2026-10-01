@@ -84,23 +84,35 @@ export function idleDeadline(app: IdleClock, limitDays: number): Date {
   return new Date(idleClockStart(app).getTime() + limitDays * DAY_MS);
 }
 
+/** Order of the first and last non-rejection Stages (Interest and Offer). */
+function funnelEnds(stages: IdleStage[]): { first: number; last: number } | null {
+  const orders = stages.filter((s) => !s.isRejection).map((s) => s.order);
+  if (orders.length === 0) return null;
+  return { first: Math.min(...orders), last: Math.max(...orders) };
+}
+
 /**
- * "Outro" in the first (Interest) and last (Offer) non-rejection Stage, where
- * a stalled Application is not a missing reply; "Sem retorno" in between.
+ * Interest, the first non-rejection Stage by order: the user's queue, where
+ * nothing has been sent yet, so it is never rejected automatically.
+ */
+export function isInterestStage(stageId: string, stages: IdleStage[]): boolean {
+  const stage = stages.find((s) => s.id === stageId);
+  const ends = funnelEnds(stages);
+  return !!stage && !stage.isRejection && !!ends && stage.order === ends.first;
+}
+
+/**
+ * "Outro" in the last non-rejection Stage (Offer), where a stalled
+ * Application is not a missing reply; "Sem retorno" from Applied up to it.
  * Resolved by Stage order, never by name.
  */
 export function autoRejectionReason(
   stageId: string,
   stages: IdleStage[]
 ): RejectionReason {
-  const orders = stages.filter((s) => !s.isRejection).map((s) => s.order);
   const stage = stages.find((s) => s.id === stageId);
-  if (!stage || orders.length === 0) return "SEM_RETORNO";
-  const first = Math.min(...orders);
-  const last = Math.max(...orders);
-  return stage.order === first || stage.order === last
-    ? "OUTRO"
-    : "SEM_RETORNO";
+  const ends = funnelEnds(stages);
+  return stage && ends && stage.order === ends.last ? "OUTRO" : "SEM_RETORNO";
 }
 
 export function autoRejectionNote(limitDays: number, stageName: string): string {
@@ -112,8 +124,8 @@ export function autoRejectionNote(limitDays: number, stageName: string): string 
  * Applications that have reached the idle limit at `now`, oldest deadline
  * first: moving them in this order, each to the top of the Rejected lane,
  * leaves the most recent deadline on top. `limitDays` null means the
- * automatic rejection is off. Archived and already rejected Applications are
- * never returned.
+ * automatic rejection is off. Applications in Interest, archived or already
+ * rejected are never returned.
  */
 export function findIdleRejections(
   candidates: IdleCandidate[],
@@ -129,6 +141,7 @@ export function findIdleRejections(
   for (const app of candidates) {
     const stage = stageById.get(app.stageId);
     if (!stage || stage.isRejection || app.archivedAt) continue;
+    if (isInterestStage(stage.id, stages)) continue;
     const deadline = idleDeadline(app, days);
     if (now.getTime() < deadline.getTime()) continue;
     due.push({
