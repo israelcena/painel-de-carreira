@@ -201,8 +201,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 - **CI on every pull request** (GitHub Actions): migrations and seed against an empty Postgres, then lint,
   typecheck, tests when present, and build.
 - `npm run typecheck` (`next typegen && tsc --noEmit`).
-- **Unattended agent workflow:** a scheduled agent picks `ready-for-agent` issues and opens pull requests
-  following `docs/agents/afk-runbook.md`; the cloud environment is prepared by `scripts/cloud-setup.sh`.
+- **Issue workflow for agents:** `ready-for-agent` issues are implemented in a session the user starts,
+  following `docs/agents/issue-runbook.md`. There is no unattended runner.
   The skills it uses (implement, tdd, pr, code-review, domain-modeling) are now installed in the repo.
 - From now on, everything except UI text (code, commits, issues, pull requests, docs and new changelog
   entries) is written in English.
