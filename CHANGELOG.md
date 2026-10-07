@@ -23,8 +23,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
   para que uma migration só entre no banco quando o deploy novo já está pronto para ser promovido.
 - **The first deploy moves every idle Application to Rejeitado.** Automatic rejection (see
   Adicionado) is on by default with a 10-day limit and is retroactive: the first time the Quadro,
-  Dashboard or Histórico renders after the deploy, every Application that is not archived and has
-  gone 10 days or more without moving (counted from the latest of entering its Stage, its Next
+  Dashboard or Histórico renders after the deploy, every Application that is not archived, not in
+  Interesse, and has gone 10 days or more without moving (counted from the latest of entering its Stage, its Next
   action date and its last unarchive) goes to Rejeitado, dated the day it reached 10 days.
   **Opening a Vercel preview of this branch does the same on the production database**, because
   previews share it. To keep everything where it is, run
@@ -72,11 +72,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
   Saving without changes records nothing. The read-view banner also gets **Retornar ao funil**, so
   both banners offer the same two actions.
 - **Automatic rejection of idle Applications.** An Application that is not archived and has gone
-  a set number of days without moving is moved to Rejeitado by the app, from any Stage, Interesse
-  to Oferta. The limit is one number for every Stage: 10 days by default, from 1 to 90. The count
+  a set number of days without moving is moved to Rejeitado by the app, from any Stage from
+  Aplicado to Oferta; Interesse, the user's queue, is never touched. The limit is one number for
+  every Stage: 10 days by default, from 1 to 90. The count
   starts at the latest of entering the current Stage, the Next action date and the last unarchive,
   so a Next action dated today or later holds it off, and restoring or unarchiving starts it over.
-  The reason is "Sem retorno (ghosting)", or "Outro" from Interesse and Oferta, and the details
+  The reason is "Sem retorno (ghosting)", or "Outro" from Oferta, and the details
   read e.g. "Movida automaticamente após 10 dias sem movimentação em Aplicado.". The Rejection is
   dated the day the limit was reached, not the day the app was opened (so time per Stage, the date
   shown in Histórico, the days in Rejeitado and the "Ordenar por mais recentes" order do not depend
@@ -85,7 +86,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
   Dashboard or Histórico page loads, with no scheduler (ADR-0004), and is retroactive: switching it
   on or lowering the limit moves every Application already past it on the next load. A new
   **Rejeição automática** card on the Dashboard, next to the weekly goal, switches it on and off
-  and sets the number of days.
+  and sets the number of days. The first version, deployed on 2026-10-01, also covered Interesse;
+  the Applications it moved from there stay in Rejeitado ("Retornar ao funil" brings one back).
 - **Currículo em cada vaga.** Nova aba **Currículo** no modal da vaga: vincule uma versão já salva
   em Documentos ou envie um arquivo novo (ex.: CV adaptado para a vaga), que entra na biblioteca e
   já fica vinculado. Um currículo por vaga; trocar substitui o vínculo e "Remover vínculo" mantém o

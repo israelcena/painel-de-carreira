@@ -37,11 +37,11 @@ Moving a Rejected Application back to a non-rejection Stage, clearing its curren
 _Avoid_: Reopen, Unreject
 
 **Automatic rejection**:
-A Rejection the app records by itself for an Application that has reached the Idle limit, in any non-rejection Stage. Its reason is "no reply", or "other" when it was in the first or the last non-rejection Stage (Interest or Offer), and it is dated when the Idle limit was reached, not when the app noticed it.
+A Rejection the app records by itself for an Application that has reached the Idle limit, in any non-rejection Stage after Interest: Interest is the user's queue and never gets one. Its reason is "no reply", or "other" when it was in Offer, and it is dated when the Idle limit was reached, not when the app noticed it.
 _Avoid_: Auto-archive, Expiry
 
 **Idle limit**:
-The number of days an Application that is not Archived may stay without moving before it gets an Automatic rejection: one value for every Stage, 10 by default, from 1 to 90, and it can be switched off. The count starts at the latest of entering the current Stage, the Next action date and unarchiving.
+The number of days an Application that is not Archived may stay without moving before it gets an Automatic rejection: one value for every Stage it applies to, 10 by default, from 1 to 90, and it can be switched off. The count starts at the latest of entering the current Stage, the Next action date and unarchiving.
 _Avoid_: Timeout, SLA
 
 **Response rate**:
